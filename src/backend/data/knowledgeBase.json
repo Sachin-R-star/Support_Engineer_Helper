@@ -1,0 +1,531 @@
+[
+  {
+    "id": "kb_net_vpn_01",
+    "category": "NETWORK",
+    "subdomain": "VPN",
+    "issue_type": "vpn_gateway_timeout",
+    "display_name": "VPN Gateway Timeout / Disconnect",
+    "description": "Remote worker unable to establish secure IPSec/TLS tunnel or experiencing frequent gateway disconnects on GlobalProtect/Cisco AnyConnect.",
+    "keywords": ["vpn", "globalprotect", "cisco anyconnect", "tunnel", "remote access", "gateway", "timeout", "disconnect", "us-east"],
+    "example_user_phrases": [
+      "Can't connect to VPN from home",
+      "GlobalProtect keeps timing out after 2FA auth",
+      "VPN gateway disconnects every 5 minutes"
+    ],
+    "required_information": ["Remote IP subnet", "VPN gateway region", "Public internet status outside VPN"],
+    "diagnostic_questions": [
+      {
+        "id": "q_net_scope",
+        "question_text": "Can you access public websites (e.g., google.com) without the VPN active?",
+        "options": [
+          {"label": "Yes, public internet works fine", "value": "public_ok"},
+          {"label": "No, local Wi-Fi / internet is completely down", "value": "local_network_down", "priority_signal": "LOCAL_OUTAGE"}
+        ]
+      },
+      {
+        "id": "q_net_gateway",
+        "question_text": "Which regional VPN gateway are you trying to connect to?",
+        "options": [
+          {"label": "US-East (Primary Gateway)", "value": "us_east"},
+          {"label": "US-West Gateway", "value": "us_west"},
+          {"label": "EU-Central Gateway", "value": "eu_central"},
+          {"label": "APAC Gateway", "value": "apac"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Verify home internet connectivity outside VPN.",
+      "Execute local DNS cache flush command (`ipconfig /flushdns` or `sudo killall -HUP mDNSResponder`).",
+      "Switch connection gateway in VPN client to US-West fallback.",
+      "Re-authenticate MFA auth token."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Entire office remote gateway unreachable", "Executive VIP user blocked"],
+      "p2_conditions": ["Primary regional gateway down"],
+      "p3_conditions": ["Single user home Wi-Fi MTU issue"],
+      "p4_conditions": ["Intermittent minor latency"]
+    },
+    "escalation_conditions": ["Gateway server unreachable for over 15 minutes", "Network adapter driver corrupt"],
+    "related_issue_types": ["kb_net_wifi_02", "kb_acc_mfa_02"]
+  },
+  {
+    "id": "kb_net_wifi_02",
+    "category": "NETWORK",
+    "subdomain": "NETWORK",
+    "issue_type": "wifi_captive_portal_failure",
+    "display_name": "Corporate Wi-Fi / Captive Portal Failure",
+    "description": "Device connected to Enterprise Wi-Fi SSID but failing 802.1X certificate authentication or missing web captive portal prompt.",
+    "keywords": ["wifi", "wi-fi", "wireless", "ssid", "captive portal", "no internet", "802.1x", "certificate", "wpa2"],
+    "example_user_phrases": [
+      "Connected to Enterprise Wi-Fi but no internet",
+      "Captive portal page won't load",
+      "Wi-Fi keeps asking for password"
+    ],
+    "required_information": ["Device MAC address", "Building/Floor location", "SSID Name"],
+    "diagnostic_questions": [
+      {
+        "id": "q_wifi_ssid",
+        "question_text": "Which Wi-Fi network are you attempting to connect to?",
+        "options": [
+          {"label": "Enterprise-Secure (802.1X Certificate)", "value": "corp_secure"},
+          {"label": "Enterprise-Guest (Web Portal)", "value": "corp_guest"},
+          {"label": "Home / Mobile Hotspot", "value": "home_hotspot"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Forget network profile and reconnect to trigger fresh 802.1X authentication.",
+      "Navigate to http://1.1.1.1 or http://neverssl.com to force captive portal redirect.",
+      "Renew DHCP IP lease."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Entire floor wireless access point outage"],
+      "p2_conditions": ["Multiple workstations disconnected"],
+      "p3_conditions": ["Single user certificate expired"],
+      "p4_conditions": ["Guest Wi-Fi slow speed"]
+    },
+    "escalation_conditions": ["Access Point hardware failure", "RADIUS server authentication timeout"],
+    "related_issue_types": ["kb_net_vpn_01"]
+  },
+  {
+    "id": "kb_acc_lockout_01",
+    "category": "ACCOUNT",
+    "subdomain": "ACCOUNT",
+    "issue_type": "account_lockout_sso",
+    "display_name": "SSO Account Lockout / Password Reset",
+    "description": "User account locked in Active Directory / OKTA due to repeated incorrect password attempts or expired credentials.",
+    "keywords": ["login", "password", "lockout", "locked", "cant login", "sso", "okta", "azure ad", "credentials", "expired password"],
+    "example_user_phrases": [
+      "My account is locked",
+      "I forgot my SSO password",
+      "Too many failed login attempts error"
+    ],
+    "required_information": ["Username / Work Email", "Affected SSO application", "Lockout timestamp"],
+    "diagnostic_questions": [
+      {
+        "id": "q_auth_scope",
+        "question_text": "Is the login failure locking your primary corporate SSO or a single third-party tool?",
+        "options": [
+          {"label": "Primary Corporate SSO / Email Account", "value": "sso_domain"},
+          {"label": "Single Specific Application (Slack, Jira)", "value": "single_app"}
+        ]
+      },
+      {
+        "id": "q_auth_error",
+        "question_text": "What message appears on your login screen?",
+        "options": [
+          {"label": "Account locked due to multiple failed attempts", "value": "locked_out"},
+          {"label": "Incorrect password or username", "value": "invalid_password"},
+          {"label": "Password has expired", "value": "password_expired"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Navigate to Enterprise Self-Service Password Reset Portal (id.enterprise.com/reset).",
+      "Wait 15 minutes for automatic AD account lock expiration.",
+      "Verify cached credentials on secondary mobile devices are updated."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["VIP Executive locked out before press release"],
+      "p2_conditions": ["Multiple users locked out simultaneously"],
+      "p3_conditions": ["Single user lockout"],
+      "p4_conditions": ["Routine password reset reminder"]
+    },
+    "escalation_conditions": ["Self-service SMS token delivery failing", "Active Directory sync service error"],
+    "related_issue_types": ["kb_acc_mfa_02"]
+  },
+  {
+    "id": "kb_acc_mfa_02",
+    "category": "ACCOUNT",
+    "subdomain": "SECURITY",
+    "issue_type": "mfa_token_desync",
+    "display_name": "MFA Authenticator Push / Desync Error",
+    "description": "User not receiving 2FA push notifications on Authenticator App or TOTP passcode rejected.",
+    "keywords": ["mfa", "2fa", "authenticator", "okta verify", "google authenticator", "push notification", "totp", "passcode", "security key"],
+    "example_user_phrases": [
+      "Not getting Okta verify push notification",
+      "MFA code says invalid or expired",
+      "I got a new phone and lost my authenticator"
+    ],
+    "required_information": ["Mobile OS type", "Authenticator App name", "Device registration status"],
+    "diagnostic_questions": [
+      {
+        "id": "q_mfa_device",
+        "question_text": "Did you recently replace or reset your mobile device?",
+        "options": [
+          {"label": "Yes, new phone without restored authenticator", "value": "new_phone"},
+          {"label": "No, same phone but push notifications not arriving", "value": "push_missing"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Toggle Airplane mode on mobile phone to refresh push notification connection.",
+      "Check time synchronization settings on mobile phone (Date & Time -> Automatic).",
+      "Use backup SMS or temporary bypass code issued by IT Desk."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Executive unable to authorize emergency change"],
+      "p2_conditions": ["On-call engineer blocked during incident"],
+      "p3_conditions": ["Single user device replacement"],
+      "p4_conditions": ["General MFA setup query"]
+    },
+    "escalation_conditions": ["Okta / Duo tenant push service outage", "Device wipe required"],
+    "related_issue_types": ["kb_acc_lockout_01"]
+  },
+  {
+    "id": "kb_app_outlook_01",
+    "category": "APPLICATION",
+    "subdomain": "EMAIL",
+    "issue_type": "email_outlook_sync_stuck",
+    "display_name": "Outlook Mail Disconnected / Sync Stuck",
+    "description": "Microsoft Outlook desktop client stuck in 'Disconnected' or 'Trying to connect' state, or inbox failing to sync new mail.",
+    "keywords": ["outlook", "email", "mail", "sync", "disconnected", "exchange", "office 365", "m365", "inbox", "ost file"],
+    "example_user_phrases": [
+      "Outlook says Disconnected at the bottom",
+      "Emails are stuck in Outbox",
+      "Outlook is not updating new messages"
+    ],
+    "required_information": ["Outlook client version", "Exchange Online status", "Webmail functionality"],
+    "diagnostic_questions": [
+      {
+        "id": "q_email_web",
+        "question_text": "Can you send and receive emails via Outlook Web App (outlook.office.com)?",
+        "options": [
+          {"label": "Yes, webmail works fine (Desktop issue only)", "value": "webmail_ok"},
+          {"label": "No, webmail also fails to send/receive", "value": "mailbox_down"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Verify webmail access at outlook.office.com to isolate desktop client from mailbox server issue.",
+      "Restart Outlook in Safe Mode (`outlook.exe /safe`).",
+      "Rebuild corrupted local Outlook data file (`.ost`)."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Tenant-wide Exchange Online delivery outage"],
+      "p2_conditions": ["Department mail transport queue stuck"],
+      "p3_conditions": ["Single user desktop OST corrupt"],
+      "p4_conditions": ["Mailbox folder view customization"]
+    },
+    "escalation_conditions": ["Exchange server transport rule fault", "Mailbox quota exceeded (Hard cap)"],
+    "related_issue_types": ["kb_app_office_03"]
+  },
+  {
+    "id": "kb_app_onedrive_02",
+    "category": "APPLICATION",
+    "subdomain": "CLOUD",
+    "issue_type": "cloud_storage_sync_conflict",
+    "display_name": "OneDrive / Cloud Storage Sync Conflict",
+    "description": "Cloud drive sync engine reporting file lock errors, duplicate conflict files, or red cross overlay on synced folders.",
+    "keywords": ["onedrive", "sharepoint", "cloud", "sync", "conflict", "file lock", "storage", "upload stuck", "cloud drive"],
+    "example_user_phrases": [
+      "OneDrive says Sync Pending",
+      "File conflict error on shared folder",
+      "OneDrive red icon on file"
+    ],
+    "required_information": ["Cloud drive provider", "File path & size", "Sync client version"],
+    "diagnostic_questions": [
+      {
+        "id": "q_cloud_error",
+        "question_text": "What specific sync icon is shown next to the file?",
+        "options": [
+          {"label": "Red Circle with White Cross (Error / Lock)", "value": "sync_error"},
+          {"label": "Blue Circular Arrows (Syncing stuck)", "value": "sync_stuck"},
+          {"label": "Yellow Exclamation Triangle (Storage quota)", "value": "storage_full"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Close file in desktop app to release local lock.",
+      "Reset OneDrive sync app (`%localappdata%\\Microsoft\\OneDrive\\onedrive.exe /reset`).",
+      "Check filename for unsupported special characters (`#`, `%`, `<`, `>`)."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Critical corporate repository deleted/corrupted"],
+      "p2_conditions": ["Project team unable to access shared deliverables"],
+      "p3_conditions": ["Single user sync conflict"],
+      "p4_conditions": ["Storage expansion request"]
+    },
+    "escalation_conditions": ["SharePoint document library permission corruption"],
+    "related_issue_types": ["kb_app_office_03"]
+  },
+  {
+    "id": "kb_app_office_03",
+    "category": "APPLICATION",
+    "subdomain": "OFFICE_PRODUCTIVITY",
+    "issue_type": "office_license_activation_error",
+    "display_name": "Microsoft 365 License Activation Error",
+    "description": "Word, Excel, or PowerPoint displaying banner 'Unlicensed Product' or 'Subscription Cannot Be Verified'.",
+    "keywords": ["excel", "word", "powerpoint", "m365", "office", "license", "unlicensed product", "activation", "subscription"],
+    "example_user_phrases": [
+      "Excel says Unlicensed Product",
+      "Can't edit documents in Word",
+      "Office asks me to sign in repeatedly"
+    ],
+    "required_information": ["M365 License SKU", "User UPN email", "OS License Credentials Cache"],
+    "diagnostic_questions": [
+      {
+        "id": "q_office_banner",
+        "question_text": "Does the app allow you to view files or is editing completely blocked?",
+        "options": [
+          {"label": "Read-only mode (Editing features disabled)", "value": "read_only"},
+          {"label": "App closes automatically on launch", "value": "crash_on_launch"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Sign out of all accounts in Office app (File -> Account -> Sign Out) and restart app.",
+      "Run Microsoft Support and Recovery Assistant (SaRA) activation fix.",
+      "Clear cached identity credentials in Windows Credential Manager."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["VIP blocked during board presentation"],
+      "p2_conditions": ["Batch license revocation error across department"],
+      "p3_conditions": ["Single user license token expired"],
+      "p4_conditions": ["License tier upgrade query"]
+    },
+    "escalation_conditions": ["M365 Admin Center license pool exhausted"],
+    "related_issue_types": ["kb_app_outlook_01", "kb_app_onedrive_02"]
+  },
+  {
+    "id": "kb_dev_bsod_01",
+    "category": "DEVICE",
+    "subdomain": "DEVICE",
+    "issue_type": "hardware_bsod_kernel_panic",
+    "display_name": "Hardware Blue Screen (BSOD) / Kernel Panic",
+    "description": "Workstation experiencing fatal system crash, blue screen stop codes (BSOD), or unexpected kernel panics during operation.",
+    "keywords": ["blue screen", "bsod", "kernel panic", "crash", "reboot", "stop code", "hardware", "memory", "dump file"],
+    "example_user_phrases": [
+      "Computer keeps crashing to a blue screen",
+      "Windows stop code CRITICAL_PROCESS_DIED",
+      "Mac rebooted because of a problem kernel panic"
+    ],
+    "required_information": ["Stop Code string", "Dump file crash trace", "Recent driver/hardware updates"],
+    "diagnostic_questions": [
+      {
+        "id": "q_hw_power",
+        "question_text": "When does the crash occur?",
+        "options": [
+          {"label": "During OS boot process", "value": "boot_crash", "priority_signal": "SYSTEM_UNBOOTABLE"},
+          {"label": "Randomly during heavy workload / video call", "value": "load_crash"},
+          {"label": "Only when connecting external docking station", "value": "dock_crash"}
+        ]
+      },
+      {
+        "id": "q_hw_stop_code",
+        "question_text": "Was a specific Windows Stop Code displayed on the blue screen?",
+        "prerequisite_question_id": "q_hw_power",
+        "prerequisite_answer_value": "boot_crash",
+        "options": [
+          {"label": "CRITICAL_PROCESS_DIED", "value": "bsod_critical"},
+          {"label": "DRIVER_IRQL_NOT_LESS_OR_EQUAL", "value": "bsod_driver"},
+          {"label": "PAGE_FAULT_IN_NONPAGED_AREA", "value": "bsod_ram"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Perform hard power reset (Hold power button for 30s).",
+      "Boot into Safe Mode and uninstall recently added display drivers or third-party antivirus.",
+      "Run Windows Memory Diagnostic tool (`mdsched.exe`) to test RAM modules."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["VIP primary laptop dead before investor call"],
+      "p2_conditions": ["System unbootable, blocking daily work"],
+      "p3_conditions": ["Occasional non-blocking weekly crash"],
+      "p4_conditions": ["Crash log collection request"]
+    },
+    "escalation_conditions": ["Motherboard / RAM hardware fault confirmed", "SSD SMART read error"],
+    "related_issue_types": ["kb_dev_battery_04", "kb_dev_dock_03"]
+  },
+  {
+    "id": "kb_dev_printer_02",
+    "category": "DEVICE",
+    "subdomain": "PRINTING",
+    "issue_type": "printer_spooler_jam",
+    "display_name": "Network Printer / Print Spooler Failure",
+    "description": "Unable to print to corporate network printer, documents stuck in print queue spooler, or printer offline error.",
+    "keywords": ["printer", "print", "spooler", "paper jam", "offline", "badge scan", "papercut", "xerox", "canon", "hp"],
+    "example_user_phrases": [
+      "Document stuck in printer queue",
+      "Printer says Offline",
+      "Print spooler service is not running"
+    ],
+    "required_information": ["Printer hostname/IP", "Print server name", "Driver type"],
+    "diagnostic_questions": [
+      {
+        "id": "q_print_scope",
+        "question_text": "Are other colleagues able to print to this network printer?",
+        "options": [
+          {"label": "Yes, others can print fine (My PC issue)", "value": "single_pc_print"},
+          {"label": "No, printer display shows error or paper jam", "value": "printer_hardware_fault"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Restart local Print Spooler service (`net stop spooler && net start spooler`).",
+      "Clear cached print job files from `%SystemRoot%\\System32\\Spool\\Printers`.",
+      "Re-add printer via PaperCut / Enterprise Print Portal."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Shipping warehouse primary label printer down"],
+      "p2_conditions": ["Executive office printer jam during compliance audit"],
+      "p3_conditions": ["Single user print spooler stuck"],
+      "p4_conditions": ["Color printing authorization request"]
+    },
+    "escalation_conditions": ["Printer hardware mechanical failure", "Print server spooler service down"],
+    "related_issue_types": ["kb_dev_bsod_01"]
+  },
+  {
+    "id": "kb_dev_dock_03",
+    "category": "DEVICE",
+    "subdomain": "PERIPHERALS",
+    "issue_type": "peripheral_docking_station_display",
+    "display_name": "Docking Station / External Monitor Detection",
+    "description": "External monitors not detected when connected via USB-C / Thunderbolt docking station or display flickering.",
+    "keywords": ["dock", "docking station", "monitor", "display", "displayport", "hdmi", "thunderbolt", "usb-c", "flickering", "dual monitor"],
+    "example_user_phrases": [
+      "External monitor is black when plugged into dock",
+      "Laptop won't charge through docking station",
+      "Second display keeps flickering"
+    ],
+    "required_information": ["Dock model", "Display Cable interface", "GPU Driver version"],
+    "diagnostic_questions": [
+      {
+        "id": "q_dock_behavior",
+        "question_text": "Is the docking station charging the laptop power battery?",
+        "options": [
+          {"label": "Yes, charging works but display is black", "value": "charging_ok_no_display"},
+          {"label": "No, dock is completely unpowered (No lights)", "value": "dock_no_power"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Unplug dock power adapter from wall outlet for 10 seconds to reset dock internal chipset.",
+      "Update Thunderbolt / DisplayLink firmware drivers.",
+      "Test direct HDMI/DisplayPort cable bypass into laptop."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Trading desk multi-monitor setup dark"],
+      "p2_conditions": ["Conference room main presentation display down"],
+      "p3_conditions": ["Single workstation dock display glitch"],
+      "p4_conditions": ["Cable adapter request"]
+    },
+    "escalation_conditions": ["Thunderbolt controller hardware failure"],
+    "related_issue_types": ["kb_dev_bsod_01"]
+  },
+  {
+    "id": "kb_dev_battery_04",
+    "category": "DEVICE",
+    "subdomain": "DEVICE",
+    "issue_type": "battery_thermal_throttling",
+    "display_name": "Laptop Battery Drain / Thermal Overheating",
+    "description": "Laptop fan running continuously at maximum RPM, severe thermal throttling performance lag, or rapid battery battery drain.",
+    "keywords": ["battery", "overheating", "fan noise", "drain", "thermal", "throttling", "hot", "power charger", "battery health"],
+    "example_user_phrases": [
+      "Laptop fan is super loud and computer is burning hot",
+      "Battery drains from 100% to 0% in 30 minutes",
+      "System running extremely slow due to overheating"
+    ],
+    "required_information": ["Battery health cycle count", "Top CPU process percentage", "Power adapter wattage"],
+    "diagnostic_questions": [
+      {
+        "id": "q_battery_phys",
+        "question_text": "Is there any visible physical swelling or bulging on the laptop casing/trackpad?",
+        "options": [
+          {"label": "YES - Physical swelling/trackpad lifted!", "value": "battery_swollen", "priority_signal": "SAFETY_HAZARD"},
+          {"label": "No physical swelling, just hot and fan loud", "value": "normal_heat"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "SAFETY CHECK: If battery shows physical swelling, shut down immediately and place in fire-safe area.",
+      "Check Activity Monitor / Task Manager for rogue process consuming 100% CPU.",
+      "Reset System Management Controller (SMC)."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Swollen battery safety hazard reported"],
+      "p2_conditions": ["Laptop shuts down repeatedly during work"],
+      "p3_conditions": ["Battery health capacity under 60%"],
+      "p4_conditions": ["Power settings optimization query"]
+    },
+    "escalation_conditions": ["Physical battery swelling (Mandatory immediate safety replacement)"],
+    "related_issue_types": ["kb_dev_bsod_01"]
+  },
+  {
+    "id": "kb_sec_phishing_01",
+    "category": "OTHER",
+    "subdomain": "SECURITY",
+    "issue_type": "phishing_security_alert",
+    "display_name": "Suspected Phishing / Security Incident",
+    "description": "User received suspicious email, clicked untrusted URL, executed unapproved file attachment, or suspects credential compromise.",
+    "keywords": ["phishing", "virus", "malware", "hack", "ransomware", "suspicious link", "clicked link", "compromised", "security", "unauthorized"],
+    "example_user_phrases": [
+      "I clicked a link in a suspicious email",
+      "I entered my password on a fake website",
+      "Antivirus popup warning about malware"
+    ],
+    "required_information": ["Email Sender Header", "Target URL clicked", "Device isolation state"],
+    "diagnostic_questions": [
+      {
+        "id": "q_sec_action",
+        "question_text": "What action occurred after opening the suspicious email?",
+        "options": [
+          {"label": "Entered corporate credentials on link", "value": "creds_exposed", "priority_signal": "SECURITY_P1"},
+          {"label": "Downloaded and ran file attachment", "value": "file_executed", "priority_signal": "SECURITY_P1"},
+          {"label": "Only opened email body, took no action", "value": "email_opened_only"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "SECURITY MANDATE: Disconnect device from Wi-Fi and ethernet immediately.",
+      "Initiate automated session revocation and password change.",
+      "Forward headers to phishing-report@enterprise.com for SOC analysis."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Credential entry on phishing site", "Ransomware payload execution"],
+      "p2_conditions": ["Unconfirmed malware alert"],
+      "p3_conditions": ["Spam email report"],
+      "p4_conditions": ["General security query"]
+    },
+    "escalation_conditions": ["Active malware C2 beaconing", "Credential compromise confirmed"],
+    "related_issue_types": ["kb_acc_lockout_01"]
+  },
+  {
+    "id": "kb_oth_general_99",
+    "category": "OTHER",
+    "subdomain": "GENERAL",
+    "issue_type": "other_general_it",
+    "display_name": "General IT Inquiry / Unclassified Issue",
+    "description": "Fallback classification path for novel, ambiguous, or unmapped IT support requests ensuring non-dead-ending triage.",
+    "keywords": ["other", "help", "general", "question", "inquiry", "unclear", "it support", "request"],
+    "example_user_phrases": [
+      "I have a general IT question",
+      "Need help with an unlisted problem",
+      "Can someone look at my computer"
+    ],
+    "required_information": ["Detailed summary of problem", "Contact phone number", "Preferred resolution window"],
+    "diagnostic_questions": [
+      {
+        "id": "q_gen_urgency",
+        "question_text": "Is this issue currently blocking your ability to work?",
+        "options": [
+          {"label": "Yes, completely blocked from working", "value": "work_blocked"},
+          {"label": "No, general question or non-blocking request", "value": "work_not_blocked"}
+        ]
+      }
+    ],
+    "troubleshooting_steps": [
+      "Gather detailed description of user request.",
+      "Route ticket to Tier 1 IT Service Desk for initial manual review.",
+      "Provide user with ticket reference number."
+    ],
+    "priority_signals": {
+      "p1_conditions": ["Critical business operation stopped"],
+      "p2_conditions": ["Work blocked for individual user"],
+      "p3_conditions": ["Standard inquiry requiring investigation"],
+      "p4_conditions": ["General informational request"]
+    },
+    "escalation_conditions": ["Unresolved after initial Tier 1 contact"],
+    "related_issue_types": []
+  }
+]

@@ -1,0 +1,202 @@
+import { ISearchProvider, SearchOptions, SearchResultCandidate } from './ISearchProvider';
+import { KbValidator } from '../kbValidator';
+import { TextNormalizer } from './normalizer';
+import { FuzzyMatcher } from './fuzzyMatcher';
+import { KbIssueDefinition, IncidentCategory } from '../../models';
+
+export class UniversalSearchEngine implements ISearchProvider {
+  private issueCatalog: KbIssueDefinition[] = [];
+
+  constructor() {
+    this.reloadCatalog();
+  }
+
+  public reloadCatalog(): void {
+    const { definitions } = KbValidator.loadAndValidateFromFile();
+    this.issueCatalog = definitions;
+  }
+
+  /**
+   * Main Search Method: Converts any input into a ranked list of plausible KB issue candidates.
+   * CORE RULE: NEVER returns an empty list or dead-end error message.
+   */
+  public search(query: string, options?: SearchOptions): SearchResultCandidate[] {
+    const limit = options?.limit || 5;
+    const cleanQuery = query.trim();
+
+    // 1. Handle Empty Query case
+    if (!cleanQuery) {
+      return this.generateCategoryFallbackOptions('Empty query provided - showing broad IT domain options.');
+    }
+
+    const { originalTokens, expandedTokens } = TextNormalizer.getExpandedTokens(cleanQuery);
+    const normalizedQuery = TextNormalizer.normalize(cleanQuery);
+
+    const scoredCandidates: { candidate: SearchResultCandidate; score: number }[] = [];
+
+    // 2. Score each Issue Definition in the Validated Knowledge Base
+    for (const issue of this.issueCatalog) {
+      // Do not match fallback issue directly in loop
+      if (issue.id === 'kb_oth_general_99' || issue.issue_type === 'other_general_it') {
+        continue;
+      }
+
+      let score = 0;
+      const matchReasons: string[] = [];
+
+      // A. Exact Phrase Match in example_user_phrases (+40 points)
+      for (const phrase of issue.example_user_phrases) {
+        const normPhrase = TextNormalizer.normalize(phrase);
+        if (normalizedQuery.includes(normPhrase) || normPhrase.includes(normalizedQuery)) {
+          score += 45;
+          matchReasons.push(`Exact phrase match: "${phrase}"`);
+          break;
+        }
+      }
+
+      // B. Exact Phrase / Term match in display_name or description (+30 points)
+      const normDisplayName = TextNormalizer.normalize(issue.display_name);
+      if (normalizedQuery.includes(normDisplayName) || normDisplayName.includes(normalizedQuery)) {
+        score += 35;
+        matchReasons.push(`Matched title: "${issue.display_name}"`);
+      }
+
+      // C. Keyword & Synonym Tokens matching (+20 points per hit)
+      const issueKeywords = issue.keywords.map(k => TextNormalizer.normalize(k));
+      let keywordHits = 0;
+
+      for (const qToken of expandedTokens) {
+        for (const kw of issueKeywords) {
+          if (kw === qToken || (qToken.length > 3 && (kw.includes(qToken) || qToken.includes(kw)))) {
+            keywordHits++;
+            matchReasons.push(`Matched keyword/synonym: "${kw}"`);
+          }
+        }
+      }
+      score += keywordHits * 20;
+
+      // D. Fuzzy Match for misspellings / typos (+25 points)
+      if (keywordHits === 0) {
+        for (const qToken of originalTokens) {
+          if (qToken.length >= 4) { // Only fuzzy match tokens >= 4 chars
+            for (const kw of issueKeywords) {
+              if (FuzzyMatcher.isFuzzyMatch(qToken, kw, 0.70)) {
+                score += 35;
+                matchReasons.push(`Fuzzy typo match: "${qToken}" -> "${kw}"`);
+              }
+            }
+          }
+        }
+      }
+
+      // E. Subdomain / Category token hit (+15 points)
+      const normSubdomain = TextNormalizer.normalize(issue.subdomain);
+      const normCategory = TextNormalizer.normalize(issue.category);
+      if (normalizedQuery.includes(normSubdomain) || normalizedQuery.includes(normCategory)) {
+        score += 15;
+        matchReasons.push(`Category/Subdomain hit: ${issue.category} (${issue.subdomain})`);
+      }
+
+      // Normalize final score to confidence percentage (0 to 98)
+      if (score > 0) {
+        const confidence = Math.min(98, Math.max(30, score));
+        scoredCandidates.push({
+          candidate: {
+            issue_id: issue.id,
+            category: issue.category,
+            issue_type: issue.issue_type,
+            user_friendly_label: issue.display_name,
+            short_explanation: issue.description,
+            confidence,
+            why_it_may_match: matchReasons.slice(0, 2).join('; ') || 'Matched keywords in KB entry'
+          },
+          score: confidence
+        });
+      }
+    }
+
+    // Sort by confidence descending
+    scoredCandidates.sort((a, b) => b.score - a.score);
+
+    const results: SearchResultCandidate[] = scoredCandidates.map(c => c.candidate);
+
+    // 3. Low Confidence / Unrelated / Ambiguous Query handling:
+    // If top candidate confidence < 40%, inject category-level broad options
+    if (results.length === 0 || results[0].confidence < 40) {
+      const fallbackOptions = this.generateCategoryFallbackOptions(
+        `Input "${cleanQuery}" is ambiguous or unmapped - showing category-level options.`
+      );
+      // Prepend any weak matches after fallback category candidates
+      return [...fallbackOptions, ...results].slice(0, limit);
+    }
+
+    // 4. Always append the "Something else / None of these" fallback candidate path
+    const fallbackPathCandidate: SearchResultCandidate = {
+      issue_id: 'kb_oth_general_99',
+      category: 'OTHER',
+      issue_type: 'other_general_it',
+      user_friendly_label: 'Something else / None of these',
+      short_explanation: 'Select if none of the candidate options match your IT issue.',
+      confidence: 10,
+      why_it_may_match: 'Universal fallback route ensuring non-dead-ending triage.'
+    };
+
+    const finalResults = results.slice(0, limit - 1);
+    finalResults.push(fallbackPathCandidate);
+
+    return finalResults;
+  }
+
+  /**
+   * Generates broad category-level candidate options when query is vague, empty, or low confidence.
+   */
+  private generateCategoryFallbackOptions(reason: string): SearchResultCandidate[] {
+    const categories: { category: IncidentCategory; label: string; issueId: string; issueType: string; desc: string }[] = [
+      {
+        category: 'ACCOUNT',
+        label: 'Account Access & Password Issue',
+        issueId: 'kb_acc_lockout_01',
+        issueType: 'account_lockout_sso',
+        desc: 'Select for login problems, password resets, MFA errors, or account lockouts.'
+      },
+      {
+        category: 'NETWORK',
+        label: 'Network & VPN Connectivity Issue',
+        issueId: 'kb_net_vpn_01',
+        issueType: 'vpn_gateway_timeout',
+        desc: 'Select for remote VPN disconnects, Wi-Fi errors, or network outages.'
+      },
+      {
+        category: 'DEVICE',
+        label: 'Hardware & Workstation Fault',
+        issueId: 'kb_dev_bsod_01',
+        issueType: 'hardware_bsod_kernel_panic',
+        desc: 'Select for blue screen crashes, battery drain, printer jams, or monitor docking issues.'
+      },
+      {
+        category: 'APPLICATION',
+        label: 'Software Application Error',
+        issueId: 'kb_app_office_03',
+        issueType: 'office_license_activation_error',
+        desc: 'Select for Outlook, Office 365, OneDrive, or enterprise software crashes.'
+      },
+      {
+        category: 'OTHER',
+        label: 'Something else / None of these',
+        issueId: 'kb_oth_general_99',
+        issueType: 'other_general_it',
+        desc: 'General IT support routing path for unlisted issues.'
+      }
+    ];
+
+    return categories.map(cat => ({
+      issue_id: cat.issueId,
+      category: cat.category,
+      issue_type: cat.issueType,
+      user_friendly_label: cat.label,
+      short_explanation: cat.desc,
+      confidence: 30,
+      why_it_may_match: reason
+    }));
+  }
+}
