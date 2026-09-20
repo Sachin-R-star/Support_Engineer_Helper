@@ -9,23 +9,20 @@ export interface AttemptedAction {
   timestamp: string;
 }
 
+export function sanitizeReasonText(rawReason?: string): string {
+  if (!rawReason) return 'Selected based on your diagnostic symptoms.';
+  let text = rawReason;
+  text = text.replace(/Matched KB troubleshooting step for .* \([A-Z_]+\/[A-Z_]+\) based on diagnostic evidence\./gi, 
+    'Matched from knowledge base based on your reported symptoms.');
+  text = text.replace(/\([A-Z_]+\/[A-Z_]+\)/gi, '');
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
 export function formatActionLabel(actionText: string): { heroTitle: string; icon: string; steps: string[] } {
-  if (!actionText) return { heroTitle: 'Review Diagnostic Guidance', icon: '🛠️', steps: ['Follow the provided diagnostic guidance.'] };
+  if (!actionText) return { heroTitle: 'Review Diagnostic Guidance', icon: '', steps: ['Follow the provided diagnostic guidance.'] };
 
-  let icon = '🛠️';
   let title = actionText;
-
-  if (/password|sso|login|credential/i.test(actionText)) {
-    icon = '🔑';
-  } else if (/dns|network|wifi|wi-fi|router|gateway|ip/i.test(actionText)) {
-    icon = '🌐';
-  } else if (/outlook|email|mail|sync/i.test(actionText)) {
-    icon = '📧';
-  } else if (/vpn|tunnel|connect/i.test(actionText)) {
-    icon = '🔒';
-  } else if (/reboot|restart|power|boot|laptop|device/i.test(actionText)) {
-    icon = '💻';
-  }
 
   // Simplify technical phrasing for non-technical employees without altering underlying semantics:
   title = title
@@ -54,7 +51,7 @@ export function formatActionLabel(actionText: string): { heroTitle: string; icon
     steps.push('Verify if normal functionality is restored');
   }
 
-  return { heroTitle: title, icon, steps };
+  return { heroTitle: title, icon: '', steps };
 }
 
 interface VerificationLoopPanelProps {
@@ -86,6 +83,7 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const actionInfo = formatActionLabel(currentAction);
+  const cleanReason = sanitizeReasonText(reason);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,9 +117,9 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
         return { icon: '✗', label: 'Failed / Unresolved', className: 'status-failed' };
       case 'PARTIALLY_RESOLVED':
       case 'PARTIAL':
-        return { icon: '⚠', label: 'Partially Resolved', className: 'status-partial' };
+        return { icon: '!', label: 'Partially Resolved', className: 'status-partial' };
       case 'SOMETHING_CHANGED':
-        return { icon: '⚡', label: 'Something Changed / New Error', className: 'status-changed' };
+        return { icon: '~', label: 'Something Changed / New Error', className: 'status-changed' };
       default:
         return { icon: '•', label: status, className: 'status-default' };
     }
@@ -140,56 +138,53 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
       ) : (
         /* Interactive Hero Next Best Action & Verification Form */
         <div className="verification-form-container">
-          <div className="hero-action-card mb-6 p-5 rounded-xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900/90 via-black to-zinc-950 shadow-2xl">
-            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-800">
-              <span className="inline-flex items-center rounded-full bg-zinc-800/90 px-3 py-1 text-xs font-bold text-zinc-100 border border-zinc-600/50 tracking-wider uppercase">
+          <div className="hero-action-card">
+            <div className="card-header-bar">
+              <span className="badge-recommended">
                 RECOMMENDED ACTION
               </span>
               {fallbackAction && (
-                <span className="inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400 border border-zinc-800" title={`Fallback: ${fallbackAction}`}>
+                <span className="badge-fallback" title={`Fallback: ${fallbackAction}`}>
                   FALLBACK AVAILABLE
                 </span>
               )}
             </div>
 
-            <div className="my-2">
-              <h3 className="text-lg font-bold text-white leading-snug tracking-tight">{actionInfo.heroTitle}</h3>
-            </div>
+            <h3 className="action-title">{actionInfo.heroTitle}</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-zinc-800/80">
-              <div>
-                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+            <div className="action-details-grid">
+              <div className="steps-column">
+                <h4 className="section-label">
                   WHAT TO DO
                 </h4>
-                <ul className="space-y-2 text-xs text-zinc-200" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <div className="steps-list">
                   {actionInfo.steps.map((step, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5">
-                      <span className="step-num-badge">
+                    <div key={idx} className="step-item">
+                      <span className="step-number">
                         {idx + 1}
                       </span>
-                      <span className="leading-relaxed">{step}</span>
-                    </li>
+                      <span className="step-text">{step}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
 
-              {reason && (
-                <div>
-                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
-                    WHY THIS STEP?
+              {cleanReason && (
+                <div className="rationale-column">
+                  <h4 className="section-label">
+                    WHY THIS STEP
                   </h4>
-                  <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-950/60 p-3 rounded-lg border border-zinc-800/80">
-                    {reason}
-                  </p>
+                  <div className="rationale-box">
+                    <p>{cleanReason}</p>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between text-xs text-zinc-400 gap-2">
-              <span className="font-semibold text-zinc-200">
+            <div className="card-footer-note">
+              <span className="footer-note-bold">
                 IF THIS DOESN'T WORK:
               </span>
-              <span>Report the outcome below to proceed to the next diagnostic step.</span>
             </div>
           </div>
 
