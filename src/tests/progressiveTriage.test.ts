@@ -25,17 +25,16 @@ describe('Progressive Triage State Machine & Branching Test Suite', () => {
   });
 
   it('2. Branching Question Logic: skips questions failing prerequisite conditions', () => {
-    // Hardware BSOD Issue: q_hw_power has options: 'boot_crash', 'no_power', 'black_screen'
-    // q_hw_stop_code has prerequisite: q_hw_power = 'boot_crash'
+    // Hardware BSOD Issue: q_hw_stop_code has prerequisite: q_freeze_symptom = 'bsod_reboot'
     const session = triageService.startSession('usr_exec_01', 'MacBook won\'t turn on or boot');
     const bsodIssue = session.candidateIssues.find(c => c.issueTypeId === 'kb_dev_bsod_01');
 
     if (bsodIssue) {
       const state = triageService.selectCandidateIssue(session.sessionId, 'kb_dev_bsod_01');
-      expect(state.currentQuestion?.id).toBe('q_hw_power');
+      expect(state.currentQuestion?.id).toBe('q_freeze_symptom');
 
-      // Answer q_hw_power with 'no_power' (which does NOT satisfy q_hw_stop_code prerequisite 'boot_crash')
-      const state2 = triageService.processAnswer(state.sessionId, 'q_hw_power', 'no_power');
+      // Answer q_freeze_symptom with 'full_system_freeze' (which does NOT satisfy q_hw_stop_code prerequisite 'bsod_reboot')
+      const state2 = triageService.processAnswer(state.sessionId, 'q_freeze_symptom', 'full_system_freeze');
 
       // QuestionEngine must skip q_hw_stop_code because prerequisite is not met!
       if (state2.currentQuestion) {

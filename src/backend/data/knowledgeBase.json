@@ -292,30 +292,43 @@
     "category": "DEVICE",
     "subdomain": "DEVICE",
     "issue_type": "hardware_bsod_kernel_panic",
-    "display_name": "Hardware Blue Screen (BSOD) / Kernel Panic",
-    "description": "Workstation experiencing fatal system crash, blue screen stop codes (BSOD), or unexpected kernel panics during operation.",
-    "keywords": ["blue screen", "bsod", "kernel panic", "crash", "reboot", "stop code", "hardware", "memory", "dump file"],
+    "display_name": "Hardware Blue Screen (BSOD) / System Freeze",
+    "description": "Workstation experiencing fatal system crash, screen hanging, system freeze, blue screen stop codes (BSOD), or unexpected kernel panics during operation.",
+    "keywords": ["blue screen", "bsod", "kernel panic", "crash", "reboot", "stop code", "hardware", "memory", "dump file", "hang", "hanging", "freeze", "freezing", "frozen", "unresponsive", "screen freeze", "laptop frozen", "stuck"],
     "example_user_phrases": [
       "Computer keeps crashing to a blue screen",
       "Windows stop code CRITICAL_PROCESS_DIED",
-      "Mac rebooted because of a problem kernel panic"
+      "Mac rebooted because of a problem kernel panic",
+      "My laptop screen is hanging",
+      "My laptop is completely frozen",
+      "My screen is frozen but mouse still moves",
+      "Laptop freezes when connected to docking station"
     ],
-    "required_information": ["Stop Code string", "Dump file crash trace", "Recent driver/hardware updates"],
+    "required_information": ["Stop Code string", "Freeze behavior (full system vs cursor)", "Dump file crash trace"],
     "diagnostic_questions": [
       {
+        "id": "q_freeze_symptom",
+        "question_text": "Is the entire laptop frozen, or can you still move the mouse/cursor?",
+        "options": [
+          {"label": "Entire laptop is completely frozen (mouse and keyboard unresponsive)", "value": "full_system_freeze"},
+          {"label": "Screen/app is frozen, but mouse cursor still moves", "value": "partial_cursor_moves"},
+          {"label": "System crashes to blue screen / reboots", "value": "bsod_reboot"}
+        ]
+      },
+      {
         "id": "q_hw_power",
-        "question_text": "When does the crash occur?",
+        "question_text": "When does the freeze or crash occur?",
         "options": [
           {"label": "During OS boot process", "value": "boot_crash", "priority_signal": "SYSTEM_UNBOOTABLE"},
           {"label": "Randomly during heavy workload / video call", "value": "load_crash"},
-          {"label": "Only when connecting external docking station", "value": "dock_crash"}
+          {"label": "Only when connected to an external docking station", "value": "dock_crash"}
         ]
       },
       {
         "id": "q_hw_stop_code",
         "question_text": "Was a specific Windows Stop Code displayed on the blue screen?",
-        "prerequisite_question_id": "q_hw_power",
-        "prerequisite_answer_value": "boot_crash",
+        "prerequisite_question_id": "q_freeze_symptom",
+        "prerequisite_answer_value": "bsod_reboot",
         "options": [
           {"label": "CRITICAL_PROCESS_DIED", "value": "bsod_critical"},
           {"label": "DRIVER_IRQL_NOT_LESS_OR_EQUAL", "value": "bsod_driver"},
@@ -355,6 +368,7 @@
       {
         "id": "q_print_scope",
         "question_text": "Are other colleagues able to print to this network printer?",
+        "assumed_components": ["printer"],
         "options": [
           {"label": "Yes, others can print fine (My PC issue)", "value": "single_pc_print"},
           {"label": "No, printer display shows error or paper jam", "value": "printer_hardware_fault"}
@@ -393,6 +407,7 @@
       {
         "id": "q_dock_behavior",
         "question_text": "Is the docking station charging the laptop power battery?",
+        "assumed_components": ["docking_station"],
         "options": [
           {"label": "Yes, charging works but display is black", "value": "charging_ok_no_display"},
           {"label": "No, dock is completely unpowered (No lights)", "value": "dock_no_power"}

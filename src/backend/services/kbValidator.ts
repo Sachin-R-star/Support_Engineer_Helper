@@ -16,6 +16,9 @@ const KbQuestionOptionSchema = z.object({
 const KbDiagnosticQuestionSchema = z.object({
   id: z.string().min(1),
   question_text: z.string().min(1),
+  prerequisite_question_id: z.string().optional(),
+  prerequisite_answer_value: z.string().optional(),
+  assumed_components: z.array(z.string()).optional(),
   options: z.array(KbQuestionOptionSchema).min(1)
 });
 

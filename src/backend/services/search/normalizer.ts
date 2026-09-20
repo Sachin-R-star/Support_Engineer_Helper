@@ -5,9 +5,10 @@ export class TextNormalizer {
     'password': ['pasword', 'passward', 'pwd', 'contraseña', 'clave', 'pin'],
     'locked': ['lockout', 'blocked', 'bloqueado', 'lock'],
     
-    // Hardware / Screen synonyms
+    // Hardware / Screen / Freeze synonyms
     'screen': ['skreen', 'skren', 'display', 'pantalla', 'monitor'],
     'blue screen': ['bsod', 'kernel panic', 'pantalla azul', 'crash', 'blue skreen'],
+    'freeze': ['hanging', 'hangs', 'hang', 'frozen', 'freezes', 'freezing', 'unresponsive', 'stuck', 'lockup', 'hangs up'],
     'battery': ['power', 'bateria', 'charger', 'cargador', 'overheating'],
     
     // Network / VPN / Wi-Fi synonyms

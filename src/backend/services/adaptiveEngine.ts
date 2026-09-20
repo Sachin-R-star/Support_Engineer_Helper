@@ -234,7 +234,12 @@ export class AdaptiveTroubleshootingEngine {
       prerequisitePenalty = 60;
     }
 
-    const rawScore = discriminationPoints + relevance + safetyBonus - userEffortPenalty - repetitionPenalty - prerequisitePenalty;
+    let ungroundedPenalty = 0;
+    if (!QuestionEngine.isQuestionGrounded(q, state)) {
+      ungroundedPenalty = 80;
+    }
+
+    const rawScore = discriminationPoints + relevance + safetyBonus - userEffortPenalty - repetitionPenalty - prerequisitePenalty - ungroundedPenalty;
     const finalScore = Math.max(0, Math.min(100, rawScore));
 
     const distList = distinguishedHypotheses.length > 0 ? distinguishedHypotheses.join(' vs ') : 'competing hypotheses';

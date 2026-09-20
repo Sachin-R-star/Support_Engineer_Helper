@@ -162,6 +162,7 @@ export interface KbDiagnosticQuestion {
   answer_type?: QuestionAnswerType;
   prerequisite_question_id?: string;
   prerequisite_answer_value?: string;
+  assumed_components?: string[];
   options: KbQuestionOption[];
 }
 

@@ -49,6 +49,11 @@ export class QuestionEngine {
         continue;
       }
 
+      // Component Grounding Check: Skip questions assuming ungrounded hardware/software components
+      if (!this.isQuestionGrounded(rawQuestion, state)) {
+        continue;
+      }
+
       // Evaluate Branching Prerequisite
       if (rawQuestion.prerequisite_question_id) {
         const prereqAnswer = state.answers[rawQuestion.prerequisite_question_id];
@@ -79,6 +84,11 @@ export class QuestionEngine {
               continue;
             }
 
+            // Component Grounding Check
+            if (!this.isQuestionGrounded(rawQuestion, state)) {
+              continue;
+            }
+
             // Prerequisite check
             if (rawQuestion.prerequisite_question_id) {
               const prereqAnswer = state.answers[rawQuestion.prerequisite_question_id];
@@ -95,6 +105,77 @@ export class QuestionEngine {
 
     // No remaining relevant questions
     return null;
+  }
+
+  /**
+   * Checks if a diagnostic question is grounded in the current session context.
+   * A question is grounded if it has no assumed components, OR all assumed components
+   * are explicitly mentioned in the user query or confirmed in prior answers.
+   */
+  public static isQuestionGrounded(q: KbDiagnosticQuestion, state: StructuredTriageState): boolean {
+    const assumed = q.assumed_components;
+    if (!assumed || assumed.length === 0) {
+      return true;
+    }
+
+    const queryLower = (state.originalInput || '').toLowerCase();
+    const answerValues = Object.values(state.answers).map(a => (a.answerValue || '').toLowerCase());
+    const answerTexts = Object.values(state.answers).map(a => `${a.questionText || ''} ${a.isUnsure ? '' : a.answerValue || ''}`.toLowerCase());
+
+    for (const comp of assumed) {
+      if (!this.isComponentGroundedInContext(comp, queryLower, answerValues, answerTexts)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static isComponentGroundedInContext(
+    comp: string,
+    queryLower: string,
+    answerValues: string[],
+    answerTexts: string[]
+  ): boolean {
+    const term = comp.toLowerCase();
+    switch (term) {
+      case 'docking_station':
+      case 'dock':
+        return (
+          /dock|docking|thunderbolt dock|usb-c dock/i.test(queryLower) ||
+          answerValues.some(v => /dock/i.test(v)) ||
+          answerTexts.some(t => /dock/i.test(t))
+        );
+      case 'external_monitor':
+      case 'monitor':
+        return (
+          /external monitor|dual monitor|second screen|displayport|hdmi/i.test(queryLower) ||
+          answerValues.some(v => /monitor|display/i.test(v)) ||
+          answerTexts.some(t => /monitor/i.test(t))
+        );
+      case 'battery':
+      case 'power':
+        return (
+          /battery|charger|charging|power|thermal|overheating|swollen/i.test(queryLower) ||
+          answerValues.some(v => /battery|charger/i.test(v))
+        );
+      case 'vpn':
+        return (
+          /vpn|globalprotect|anyconnect|tunnel/i.test(queryLower) ||
+          answerValues.some(v => /vpn/i.test(v))
+        );
+      case 'printer':
+        return (
+          /print|printer|spooler|papercut/i.test(queryLower) ||
+          answerValues.some(v => /print/i.test(v))
+        );
+      case 'wifi':
+        return (
+          /wifi|wi-fi|wireless|ssid|captive/i.test(queryLower) ||
+          answerValues.some(v => /wifi/i.test(v))
+        );
+      default:
+        return queryLower.includes(term) || answerValues.some(v => v.includes(term));
+    }
   }
 
   /**
