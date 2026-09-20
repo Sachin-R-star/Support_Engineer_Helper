@@ -32,12 +32,8 @@ export const App: React.FC = () => {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <div className="logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+          <div className="logo-icon logo-circle" style={{ borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '2px', overflow: 'hidden' }}>
+            <img src="/favicon.svg" alt="Tech Support Logo" width="32" height="32" style={{ borderRadius: '50%', objectFit: 'contain' }} />
           </div>
           <div>
             <h1>Enterprise IT Support Triage</h1>
