@@ -430,42 +430,86 @@ export class TriageService {
 
     const issueType = TaxonomyService.findIssueTypeById(incident.issueType) || TaxonomyService.getTaxonomy()[0];
 
-    // 3. Branch handling by ActionResultStatus
+    // 3. Branch handling by ActionResultStatus & User Notes symptom evaluation
+    let matchedNewIssue: KbIssueDefinition | null = null;
+    if (payload.userNotes && payload.userNotes.trim().length > 3) {
+      const newSymptomMatches = TaxonomyService.matchCandidatesFromQuery(payload.userNotes.trim());
+      if (newSymptomMatches.length > 0 && newSymptomMatches[0].confidence >= 40) {
+        matchedNewIssue = newSymptomMatches[0].issueType;
+      }
+    }
+
     if (payload.resultStatus === 'YES_RESOLVED') {
       updatedStatus = 'RESOLVED';
       isResolved = true;
       resolutionSummary = `Resolved via troubleshooting action: "${payload.actionDescription}". ${payload.userNotes ? 'User notes: ' + payload.userNotes : ''}`;
       this.repo.resolveIncident(incident.id, resolutionSummary);
-    } else if (payload.resultStatus === 'NO_FAILED' || payload.resultStatus === 'PARTIALLY_RESOLVED') {
-      updatedStatus = 'IN_PROGRESS';
-      this.repo.updateStatus(incident.id, 'IN_PROGRESS');
-    } else if (payload.resultStatus === 'SOMETHING_CHANGED') {
+
+      // If user resolved current step but reported a NEW symptom in notes, create linked follow-up incident for the new issue!
+      if (matchedNewIssue && payload.userNotes && payload.userNotes.trim()) {
+        const followUpSummary = `New symptom reported: ${payload.userNotes.trim()}`;
+        const followUpId = `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const followUpTicketNum = `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const createdFollowUp = this.memoryService.createIncident({
+          id: followUpId,
+          ticketNumber: followUpTicketNum,
+          userId: incident.userId,
+          deviceId: incident.deviceId,
+          category: matchedNewIssue.category,
+          issueType: matchedNewIssue.issue_type,
+          priority: incident.priority,
+          status: 'OPEN',
+          summary: followUpSummary,
+          description: `Linked follow-up incident for new symptom reported while resolving ${incident.ticketNumber}: "${payload.userNotes.trim()}". Matched domain: ${matchedNewIssue.display_name}.`,
+          missingInfo: matchedNewIssue.required_information || [],
+          recommendedNextStep: matchedNewIssue.troubleshooting_steps[0] || 'Investigate new reported symptom.',
+          reasoning: `Follow-up ticket linked to ${incident.ticketNumber} for newly reported symptom '${payload.userNotes.trim()}'.`,
+          confidenceScore: 65
+        });
+
+        this.memoryService.linkIncidents(
+          createdFollowUp.id,
+          incident.id,
+          'POSSIBLY_CAUSED_BY',
+          0.85
+        );
+
+        followUpIncident = {
+          id: createdFollowUp.id,
+          ticketNumber: createdFollowUp.ticketNumber,
+          summary: createdFollowUp.summary,
+          relationshipType: 'POSSIBLY_CAUSED_BY'
+        };
+      }
+    } else if (payload.resultStatus === 'NO_FAILED' || payload.resultStatus === 'PARTIALLY_RESOLVED' || payload.resultStatus === 'SOMETHING_CHANGED') {
       updatedStatus = 'IN_PROGRESS';
       this.repo.updateStatus(incident.id, 'IN_PROGRESS');
 
-      // Create & link a follow-up incident representing the new symptom/issue
+      // Create & link a follow-up incident representing the new symptom/issue if notes provided or SOMETHING_CHANGED
       const followUpSummary = payload.userNotes 
         ? `New symptom after ${payload.actionDescription}: ${payload.userNotes}`
         : `New/changed symptom reported following action '${payload.actionDescription}' on ${incident.ticketNumber}`;
 
       const followUpId = `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const followUpTicketNum = `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const targetIssue = matchedNewIssue || issueType;
 
       const createdFollowUp = this.memoryService.createIncident({
         id: followUpId,
         ticketNumber: followUpTicketNum,
         userId: incident.userId,
         deviceId: incident.deviceId,
-        category: incident.category,
-        issueType: incident.issueType,
+        category: targetIssue.category,
+        issueType: targetIssue.issue_type,
         priority: incident.priority,
         status: 'OPEN',
         summary: followUpSummary,
-        description: `Follow-up issue triggered after executing action '${payload.actionDescription}' on ticket ${incident.ticketNumber}. User feedback: ${payload.userNotes || 'Something changed'}`,
-        missingInfo: [],
-        recommendedNextStep: 'Assess new symptom and verify system configuration.',
-        reasoning: `Follow-up ticket linked to ${incident.ticketNumber} after troubleshooting action execution.`,
-        confidenceScore: Math.max(30, incident.confidenceScore - 15)
+        description: `Follow-up issue triggered after executing action '${payload.actionDescription}' on ticket ${incident.ticketNumber}. User feedback: ${payload.userNotes || payload.resultStatus}`,
+        missingInfo: targetIssue.required_information || [],
+        recommendedNextStep: targetIssue.troubleshooting_steps[0] || 'Assess new symptom and verify system configuration.',
+        reasoning: `Follow-up ticket linked to ${incident.ticketNumber} after troubleshooting action execution. Matched domain: ${targetIssue.display_name}.`,
+        confidenceScore: Math.max(30, incident.confidenceScore - 10)
       });
 
       // Link follow-up incident with POSSIBLY_CAUSED_BY relationship
@@ -494,18 +538,24 @@ export class TriageService {
       const failedCount = attemptedHistory.filter(a => a.resultStatus === 'NO_FAILED' || a.resultStatus === 'PARTIALLY_RESOLVED' || a.resultStatus === 'SOMETHING_CHANGED').length;
       updatedConfidence = Math.max(30, Math.min(95, incident.confidenceScore - (failedCount * 10)));
 
-      // Generate recommendation excluding all attempted actions
-      const newRec = RecommendationService.generateStructuredRecommendation({
-        category: incident.category,
-        selectedIssue: issueType,
-        answers: {},
-        evidence: this.repo.getEvidenceForIncident(incident.id),
-        previousActions: previousActionDescriptions,
-        confidence: updatedConfidence
-      });
+      if (matchedNewIssue && matchedNewIssue.troubleshooting_steps.length > 0) {
+        // If a new symptom was matched to a specific issue type, prioritize troubleshooting steps for the new symptom!
+        nextRecAction = matchedNewIssue.troubleshooting_steps[0];
+        nextFallbackAction = matchedNewIssue.troubleshooting_steps[1] || matchedNewIssue.troubleshooting_steps[0];
+      } else {
+        // Generate recommendation excluding all attempted actions
+        const newRec = RecommendationService.generateStructuredRecommendation({
+          category: incident.category,
+          selectedIssue: issueType,
+          answers: {},
+          evidence: this.repo.getEvidenceForIncident(incident.id),
+          previousActions: previousActionDescriptions,
+          confidence: updatedConfidence
+        });
 
-      nextRecAction = newRec.action;
-      nextFallbackAction = newRec.fallback_action;
+        nextRecAction = newRec.action;
+        nextFallbackAction = newRec.fallback_action;
+      }
 
       // Update incident record with new next step & confidence
       DatabaseService.getDb().prepare(`

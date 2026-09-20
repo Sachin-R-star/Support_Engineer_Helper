@@ -101,11 +101,37 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
       )}
 
       {followUpTicket && (
-        <div className="section-card warning-card" style={{ borderColor: 'var(--p2-orange)', background: 'rgba(245, 158, 11, 0.05)' }}>
-          <h4>Follow-Up Ticket Generated</h4>
-          <p>
-            A follow-up incident <strong>{followUpTicket.ticketNumber}</strong> ({followUpTicket.summary}) has been automatically created and linked to this ticket via POSSIBLY_CAUSED_BY relationship.
+        <div className="section-card warning-card" style={{ borderColor: 'var(--p2-orange)', background: 'rgba(245, 158, 11, 0.08)', margin: '1rem 0' }}>
+          <h4 style={{ color: '#f59e0b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>⚡</span> Follow-Up Ticket Generated & Linked
+          </h4>
+          <p style={{ marginTop: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            New symptom detected! Follow-up incident <strong>{followUpTicket.ticketNumber}</strong> (<em>{followUpTicket.summary}</em>) has been automatically created, linked, and prioritized for resolution.
           </p>
+        </div>
+      )}
+
+      {/* Prominent Required Information & Missing Diagnostic Attributes Card */}
+      {result.missingInformation && result.missingInformation.length > 0 && (
+        <div className="section-card" style={{ borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.06)', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h4 style={{ color: '#818cf8', margin: 0, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📋</span> Required Parameters for AI & Support Engineer Resolution
+            </h4>
+            <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.2)', color: '#a5b4fc', padding: '2px 8px', borderRadius: '4px' }}>
+              {result.missingInformation.length} Attribute{result.missingInformation.length !== 1 ? 's' : ''} Required
+            </span>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+            The following specific diagnostic information is needed by AI models and Tier 2 Support Engineers to complete root cause isolation:
+          </p>
+          <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-primary)', fontSize: '0.875rem' }}>
+            {result.missingInformation.map((item, idx) => (
+              <li key={idx} style={{ marginBottom: '0.35rem' }}>
+                <strong>{item}</strong>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
