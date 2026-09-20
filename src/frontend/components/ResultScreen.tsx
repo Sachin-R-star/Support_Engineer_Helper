@@ -30,6 +30,8 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
   const [isResolved, setIsResolved] = useState<boolean>(false);
   const [followUpTicket, setFollowUpTicket] = useState<{ id: string; ticketNumber: string; summary: string } | null>(null);
 
+  const [isTechExpanded, setIsTechExpanded] = useState<boolean>(false);
+
   const handleActionVerified = (res: any) => {
     if (res.attemptedActionsHistory) {
       setAttemptedActions(res.attemptedActionsHistory);
@@ -115,46 +117,61 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
           isResolved={isResolved}
         />
 
-        {/* System Reasoning Section */}
-        <div className="section-card">
-          <h4>🧠 System Diagnostic Reasoning</h4>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{result.reasoning}</p>
-        </div>
+        {/* Collapsible Engineer Technical Diagnostics Boundary */}
+        <div className="tech-diagnostics-wrapper" style={{ marginTop: '1.5rem' }}>
+          <button
+            type="button"
+            className="toggle-tech-btn"
+            onClick={() => setIsTechExpanded(!isTechExpanded)}
+          >
+            <span>{isTechExpanded ? '▼ Hide Technical Diagnostics & RCA' : '► Show Technical Diagnostics & RCA (For Engineers)'}</span>
+          </button>
 
-        {/* Missing Information Section */}
-        {result.missingInformation && result.missingInformation.length > 0 && (
-          <div className="section-card" style={{ borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-            <h4 style={{ color: 'var(--p2-orange)' }}>⚠️ Missing Information & Unconfirmed Attributes</h4>
-            <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {result.missingInformation.map((item, idx) => (
-                <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {isTechExpanded && (
+            <div className="expanded-tech-content" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* System Reasoning Section */}
+              <div className="section-card">
+                <h4>🧠 System Diagnostic Reasoning</h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{result.reasoning}</p>
+              </div>
 
-        {/* Linked Incidents & Graph Linkage */}
-        {result.linkedIncidents && result.linkedIncidents.length > 0 && (
-          <div className="section-card">
-            <h4>🔗 Related Historical Incidents & Graph Links</h4>
-            <div className="linked-list">
-              {result.linkedIncidents.map((link, idx) => (
-                <div key={idx} className="linked-item">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="ticket-num">{link.ticketNumber}</span>
-                    <span className="category-badge">{link.relationshipType}</span>
-                  </div>
-                  <span className="confidence-meter">Similarity Match: <strong>{Math.round(link.similarityScore * 100)}%</strong></span>
+              {/* Missing Information Section */}
+              {result.missingInformation && result.missingInformation.length > 0 && (
+                <div className="section-card" style={{ borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                  <h4 style={{ color: 'var(--p2-orange)' }}>⚠️ Missing Information & Unconfirmed Attributes</h4>
+                  <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    {result.missingInformation.map((item, idx) => (
+                      <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              )}
 
-        {/* Explainable Root Cause Analysis (RCA) Section */}
-        {result.linkedIncidents && result.linkedIncidents[0]?.incidentId && (
-          <RcaPanel incidentId={result.linkedIncidents[0].incidentId} />
-        )}
+              {/* Linked Incidents & Graph Linkage */}
+              {result.linkedIncidents && result.linkedIncidents.length > 0 && (
+                <div className="section-card">
+                  <h4>🔗 Related Historical Incidents & Graph Links</h4>
+                  <div className="linked-list">
+                    {result.linkedIncidents.map((link, idx) => (
+                      <div key={idx} className="linked-item">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span className="ticket-num">{link.ticketNumber}</span>
+                          <span className="category-badge">{link.relationshipType}</span>
+                        </div>
+                        <span className="confidence-meter">Similarity Match: <strong>{Math.round(link.similarityScore * 100)}%</strong></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Explainable Root Cause Analysis (RCA) Section */}
+              {result.linkedIncidents && result.linkedIncidents[0]?.incidentId && (
+                <RcaPanel incidentId={result.linkedIncidents[0].incidentId} />
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="result-footer">

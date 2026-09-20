@@ -166,16 +166,16 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
                 <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   📌 WHAT TO DO
                 </h4>
-                <ol className="space-y-1.5 text-xs text-slate-200">
+                <ul className="space-y-1.5 text-xs text-slate-200" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {actionInfo.steps.map((step, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
+                    <li key={idx} className="flex items-start gap-2 mb-1.5">
                       <span className="step-num-badge">
                         {idx + 1}
                       </span>
                       <span>{step}</span>
                     </li>
                   ))}
-                </ol>
+                </ul>
               </div>
 
               {reason && (
