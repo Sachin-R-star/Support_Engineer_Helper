@@ -6,7 +6,7 @@ import { CommandPalette } from './components/CommandPalette';
 import './index.css';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'triage' | 'history'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'triage' | 'dashboard' | 'history'>('triage');
   const [initialTriageQuery, setInitialTriageQuery] = useState<string | undefined>(undefined);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const activeUserId = 'usr_exec_01'; // Default test user: Alex Morgan (Executive VIP)
@@ -53,16 +53,16 @@ export const App: React.FC = () => {
 
           <nav className="nav-tabs">
             <button 
-              className={activeTab === 'dashboard' ? 'active' : ''} 
-              onClick={() => setActiveTab('dashboard')}
-            >
-              Engineer Dashboard
-            </button>
-            <button 
               className={activeTab === 'triage' ? 'active' : ''} 
               onClick={() => setActiveTab('triage')}
             >
               New Triage Session
+            </button>
+            <button 
+              className={activeTab === 'dashboard' ? 'active' : ''} 
+              onClick={() => setActiveTab('dashboard')}
+            >
+              Engineer Dashboard
             </button>
             <button 
               className={activeTab === 'history' ? 'active' : ''} 

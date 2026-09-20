@@ -2392,7 +2392,7 @@ kbd {
   backdrop-filter: blur(6px);
   display: flex;
   justify-content: flex-end;
-  z-index: 2000;
+  z-index: 10000;
 }
 
 .engineer-inspector-panel {

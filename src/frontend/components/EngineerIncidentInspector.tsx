@@ -96,8 +96,31 @@ export const EngineerIncidentInspector: React.FC<EngineerIncidentInspectorProps>
     }
   };
 
-  if (loading) return <div className="inspector-loading">Loading Engineer Incident Inspector...</div>;
-  if (error || !data) return <div className="inspector-error">Error: {error || 'Incident not found'}</div>;
+  if (loading) {
+    return (
+      <div className="engineer-inspector-backdrop" onClick={onClose}>
+        <div className="engineer-inspector-panel" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="inspector-loading">Loading Engineer Incident Inspector...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="engineer-inspector-backdrop" onClick={onClose}>
+        <div className="engineer-inspector-panel" onClick={(e) => e.stopPropagation()} style={{ padding: '2rem' }}>
+          <div className="inspector-header">
+            <h4 style={{ color: '#ef4444', margin: 0 }}>Incident Inspector</h4>
+            <button onClick={onClose} className="btn-close-inspector" title="Close inspector">✕ Close</button>
+          </div>
+          <div className="inspector-error" style={{ padding: '2rem 0', color: '#f87171' }}>
+            Error: {error || 'Incident not found'}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const { incident, user, device, answers, actions, relationships } = data;
 
@@ -127,8 +150,8 @@ export const EngineerIncidentInspector: React.FC<EngineerIncidentInspectorProps>
   };
 
   return (
-    <div className="engineer-inspector-backdrop">
-      <div className="engineer-inspector-panel">
+    <div className="engineer-inspector-backdrop" onClick={onClose}>
+      <div className="engineer-inspector-panel" onClick={(e) => e.stopPropagation()}>
         {/* Top Header */}
         <div className="inspector-header">
           <div className="header-left">
