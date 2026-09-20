@@ -38,20 +38,26 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
     'Outlook crashes when opening attachments'
   ];
 
-  const categories: { category: IncidentCategory; label: string; desc: string }[] = [
-    { category: 'NETWORK', label: 'Network & VPN', desc: 'Wi-Fi, VPN disconnects, internet speed' },
-    { category: 'ACCOUNT', label: 'Account & Password', desc: 'Password reset, lockout, MFA, SSO' },
-    { category: 'APPLICATION', label: 'Apps & Email', desc: 'Outlook, Teams, app crashes, licenses' },
-    { category: 'DEVICE', label: 'Hardware & OS', desc: 'BSOD, battery drain, monitor dock' },
-    { category: 'OTHER', label: 'General / Other', desc: 'Peripherals, unlisted tech requests' }
+  const categories: { category: IncidentCategory; label: string; desc: string; icon: string }[] = [
+    { category: 'NETWORK', label: 'Network & VPN', desc: 'Wi-Fi, VPN disconnects, internet speed & gateway issues', icon: '📶' },
+    { category: 'ACCOUNT', label: 'Account & Password', desc: 'Password reset, SSO lockout, MFA & identity access', icon: '🔐' },
+    { category: 'APPLICATION', label: 'Apps & Software', desc: 'Outlook, Teams, crash logs & software licenses', icon: '💻' },
+    { category: 'DEVICE', label: 'Hardware & OS', desc: 'BSOD, battery, docking station & display adapters', icon: '🖥️' },
+    { category: 'OTHER', label: 'General IT Request', desc: 'Peripherals, workspace access & unlisted tech support', icon: '🛠️' }
   ];
 
   return (
     <div className="universal-input-container">
-      <h2>Describe your IT Issue or Symptom</h2>
-      <p className="subtitle">
-        Enter any problem description. The AI-powered engine will guide you through a one-question-at-a-time triage.
-      </p>
+      <div className="hero-header">
+        <div className="hero-badge">
+          <span className="pulse-dot"></span>
+          <span>AI-Guided ITSM Engine</span>
+        </div>
+        <h2>Describe your IT Issue or Symptom</h2>
+        <p className="subtitle">
+          Describe what you're experiencing in plain language. Our adaptive triage engine will ask targeted follow-up questions to isolate the root cause.
+        </p>
+      </div>
 
       {precedingCausalAction && (
         <div className="memory-context-banner">
@@ -63,15 +69,17 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="input-form">
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="e.g. My laptop displays a blue screen with CRITICAL_PROCESS_DIED whenever I plug in the USB-C dock..."
-          rows={3}
-          disabled={isLoading}
-          autoFocus
-        />
+        <div className="textarea-wrapper">
+          <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="e.g. Wi-Fi is connected but I cannot access internal portals or internet..."
+            rows={3}
+            disabled={isLoading}
+            autoFocus
+          />
+        </div>
         <div className="form-actions">
           <span className="subtitle" style={{ margin: 0 }}>
             Press <kbd>Enter</kbd> to submit
@@ -83,19 +91,20 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
       </form>
 
       <div className="sample-queries">
-        <span>Quick Example Symptoms:</span>
+        <span className="sample-title">⚡ Common Support Scenarios:</span>
         <div className="chips">
           {sampleQueries.map((sample, idx) => (
             <button key={idx} type="button" className="chip" onClick={() => setQuery(sample)}>
-              {sample}
+              <span className="chip-icon">💬</span>
+              <span>{sample}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ marginTop: '2rem' }}>
-        <span className="subtitle" style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>
-          Or choose a primary category directly:
+      <div className="category-selection-section">
+        <span className="category-section-title">
+          Or select a primary issue domain:
         </span>
         <div className="broader-categories-grid">
           {categories.map((cat) => (
@@ -104,7 +113,10 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
               className="category-choice-card"
               onClick={() => onSelectCategory && onSelectCategory(cat.category)}
             >
-              <h5>{cat.label}</h5>
+              <div className="category-card-header">
+                <span className="cat-icon">{cat.icon}</span>
+                <h5>{cat.label}</h5>
+              </div>
               <p>{cat.desc}</p>
             </div>
           ))}
