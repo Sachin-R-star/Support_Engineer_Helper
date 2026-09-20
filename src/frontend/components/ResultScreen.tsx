@@ -33,10 +33,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
 
   const [isTechExpanded, setIsTechExpanded] = useState<boolean>(false);
 
-  // Automatically scroll to the top of the page when the solution screen mounts
+  // Automatically scroll to the top of the page when the solution screen mounts or followUpTicket is set
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [followUpTicket]);
 
   const handleActionVerified = (res: any) => {
     if (res.attemptedActionsHistory) {
@@ -71,6 +71,11 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
         setConfidence(res.updatedConfidence);
       }
     }
+
+    // Scroll smoothly to top so user can see follow-up ticket banner & status updates
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   return (
