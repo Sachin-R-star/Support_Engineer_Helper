@@ -134,9 +134,14 @@ export class KbValidator {
    * Reads and validates the knowledgeBase.json file from disk.
    */
   public static loadAndValidateFromFile(filePath?: string): { definitions: KbIssueDefinition[]; validation: ValidationResult } {
-    const targetPath = filePath || path.join(__dirname, '../data/knowledgeBase.json');
+    let targetPath = filePath || path.join(__dirname, '../data/knowledgeBase.json');
     if (!fs.existsSync(targetPath)) {
-      throw new Error(`Knowledge Base file not found at ${targetPath}`);
+      const fallbackPath = path.join(process.cwd(), 'src/backend/data/knowledgeBase.json');
+      if (fs.existsSync(fallbackPath)) {
+        targetPath = fallbackPath;
+      } else {
+        throw new Error(`Knowledge Base file not found at ${targetPath}`);
+      }
     }
 
     const rawData = fs.readFileSync(targetPath, 'utf8');
