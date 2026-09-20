@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FinalTriageResult } from '../types/triage';
 import { VerificationLoopPanel, AttemptedAction } from './VerificationLoopPanel';
 import { RcaPanel } from './RcaPanel';
@@ -31,6 +31,11 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
   const [followUpTicket, setFollowUpTicket] = useState<{ id: string; ticketNumber: string; summary: string } | null>(null);
 
   const [isTechExpanded, setIsTechExpanded] = useState<boolean>(false);
+
+  // Automatically scroll to the top of the page when the solution screen mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleActionVerified = (res: any) => {
     if (res.attemptedActionsHistory) {

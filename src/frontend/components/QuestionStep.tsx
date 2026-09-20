@@ -69,6 +69,11 @@ export const QuestionStep: React.FC<QuestionStepProps> = ({
 }) => {
   const [textInput, setTextInput] = useState('');
 
+  // Scroll smoothly to top on question change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [question?.id, askedCount]);
+
   // Keyboard navigation (Keys A, B, C, D or 1, 2, 3, 4)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
