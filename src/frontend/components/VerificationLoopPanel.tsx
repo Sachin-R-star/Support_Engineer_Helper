@@ -132,7 +132,6 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
       {/* Resolution Success Banner */}
       {isResolved ? (
         <div className="resolution-success-banner">
-          <div className="banner-icon">🎉</div>
           <div className="banner-text">
             <h3>Incident Confirmed Resolved</h3>
             <p>User confirmed that the troubleshooting action successfully restored normal functionality.</p>
@@ -142,37 +141,33 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
         /* Interactive Hero Next Best Action & Verification Form */
         <div className="verification-form-container">
           <div className="hero-action-card mb-6 p-5 rounded-xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900/90 via-black to-zinc-950 shadow-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-3 py-1 text-xs font-bold text-zinc-100 border border-zinc-600/50 tracking-wider">
-                🚀 NEXT BEST ACTION
+            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-800">
+              <span className="inline-flex items-center rounded-full bg-zinc-800/90 px-3 py-1 text-xs font-bold text-zinc-100 border border-zinc-600/50 tracking-wider uppercase">
+                RECOMMENDED ACTION
               </span>
               {fallbackAction && (
-                <span className="text-[11px] text-zinc-400" title={`Fallback: ${fallbackAction}`}>
-                  Fallback available
+                <span className="inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400 border border-zinc-800" title={`Fallback: ${fallbackAction}`}>
+                  FALLBACK AVAILABLE
                 </span>
               )}
             </div>
 
-            <div className="flex items-start gap-3 my-3">
-              <span className="text-2xl mt-0.5">{actionInfo.icon}</span>
-              <div>
-                <h3 className="text-lg font-bold text-white leading-snug">{actionInfo.heroTitle}</h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-mono">Original KB Step: {currentAction}</p>
-              </div>
+            <div className="my-2">
+              <h3 className="text-lg font-bold text-white leading-snug tracking-tight">{actionInfo.heroTitle}</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-slate-700/60">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-zinc-800/80">
               <div>
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  📌 WHAT TO DO
+                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+                  WHAT TO DO
                 </h4>
-                <ul className="space-y-1.5 text-xs text-slate-200" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <ul className="space-y-2 text-xs text-zinc-200" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {actionInfo.steps.map((step, idx) => (
-                    <li key={idx} className="flex items-start gap-2 mb-1.5">
+                    <li key={idx} className="flex items-start gap-2.5">
                       <span className="step-num-badge">
                         {idx + 1}
                       </span>
-                      <span>{step}</span>
+                      <span className="leading-relaxed">{step}</span>
                     </li>
                   ))}
                 </ul>
@@ -180,26 +175,26 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
 
               {reason && (
                 <div>
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    💡 WHY THIS STEP?
+                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
+                    WHY THIS STEP?
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-2.5 rounded-lg border border-slate-800">
+                  <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-950/60 p-3 rounded-lg border border-zinc-800/80">
                     {reason}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-700/50 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
-              <span className="font-semibold text-slate-300">
-                🔄 IF THIS DOESN'T WORK:
+            <div className="mt-4 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between text-xs text-zinc-400 gap-2">
+              <span className="font-semibold text-zinc-200">
+                IF THIS DOESN'T WORK:
               </span>
-              <span>Report the result below to automatically select the next troubleshooting step.</span>
+              <span>Report the outcome below to proceed to the next diagnostic step.</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="verification-form">
-            <label className="form-question-label text-sm font-semibold text-slate-200 mb-2 block">
+            <label className="form-question-label text-sm font-semibold text-zinc-200 mb-2 block">
               Did this action resolve your issue?
             </label>
             <div className="status-radio-grid">
@@ -226,7 +221,7 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
                 className={`choice-btn ${selectedStatus === 'PARTIALLY_RESOLVED' ? 'selected warning' : ''}`}
                 onClick={() => setSelectedStatus('PARTIALLY_RESOLVED')}
               >
-                <span className="btn-icon">⚠</span>
+                <span className="btn-icon">!</span>
                 <span className="btn-label">Partially Resolved</span>
               </button>
 
@@ -235,18 +230,18 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
                 className={`choice-btn ${selectedStatus === 'SOMETHING_CHANGED' ? 'selected info' : ''}`}
                 onClick={() => setSelectedStatus('SOMETHING_CHANGED')}
               >
-                <span className="btn-icon">⚡</span>
+                <span className="btn-icon">~</span>
                 <span className="btn-label">Something Changed</span>
               </button>
             </div>
 
             <div className="form-group mt-3">
-              <label className="text-xs text-slate-400 mb-1 block">Additional Details or New Symptoms (Optional):</label>
+              <label className="text-xs text-zinc-400 mb-1 block">Additional Details or New Symptoms (Optional):</label>
               <textarea
                 rows={2}
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
-                placeholder="e.g. Wi-Fi connected, but VPN authentication timed out..."
+                placeholder="e.g. Wi-Fi connected, but authentication timed out..."
                 className="form-textarea"
               />
             </div>
@@ -261,8 +256,8 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
       )}
 
       {/* Attempted Actions History List */}
-      <div className="attempted-actions-section mt-6 border-t border-slate-800 pt-4">
-        <h4 className="panel-title">📋 Troubleshooting History & Attempted Actions</h4>
+      <div className="attempted-actions-section mt-6 border-t border-zinc-800 pt-4">
+        <h4 className="panel-title">Troubleshooting History & Attempted Actions</h4>
         {attemptedActions.length === 0 ? (
           <p className="empty-subtext">No troubleshooting steps have been executed for this ticket yet.</p>
         ) : (

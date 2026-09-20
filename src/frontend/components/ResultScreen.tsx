@@ -71,13 +71,13 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
       <div className="result-header">
         <div className="badge-group">
           <span className={`priority-badge ${priorityStr}`}>
-            ⚡ Priority: {priorityStr.replace('_', ' ')}
+            Priority: {priorityStr.replace('_', ' ')}
           </span>
           <span className="category-badge">{formatCategory(result.category)}</span>
-          {isResolved && <span className="status-badge status-resolved font-bold">✓ RESOLVED</span>}
+          {isResolved && <span className="status-badge status-resolved font-bold">RESOLVED</span>}
           {rec?.escalation?.recommended && !isResolved && (
             <span className="priority-badge CRITICAL">
-              🚨 Escalation Recommended ({rec.escalation.tier})
+              Escalation Recommended ({rec.escalation.tier})
             </span>
           )}
         </div>
@@ -90,14 +90,14 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
 
       {recovery && recovery.isRecoveryActive && (
         <div className="recovery-banner">
-          <h4>💡 Uncertainty Guidance</h4>
+          <h4>Uncertainty Guidance</h4>
           <p>{recovery.userMessage}</p>
         </div>
       )}
 
       {followUpTicket && (
         <div className="section-card warning-card" style={{ borderColor: 'var(--p2-orange)', background: 'rgba(245, 158, 11, 0.05)' }}>
-          <h4>⚡ Follow-Up Ticket Generated</h4>
+          <h4>Follow-Up Ticket Generated</h4>
           <p>
             A follow-up incident <strong>{followUpTicket.ticketNumber}</strong> ({followUpTicket.summary}) has been automatically created and linked to this ticket via POSSIBLY_CAUSED_BY relationship.
           </p>
@@ -124,21 +124,21 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
             className="toggle-tech-btn"
             onClick={() => setIsTechExpanded(!isTechExpanded)}
           >
-            <span>{isTechExpanded ? '▼ Hide Technical Diagnostics & RCA' : '► Show Technical Diagnostics & RCA (For Engineers)'}</span>
+            <span>{isTechExpanded ? '▼ Hide Technical Diagnostics & RCA' : 'Show Technical Diagnostics & RCA (For Engineers)'}</span>
           </button>
 
           {isTechExpanded && (
             <div className="expanded-tech-content" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* System Reasoning Section */}
               <div className="section-card">
-                <h4>🧠 System Diagnostic Reasoning</h4>
+                <h4>System Diagnostic Reasoning</h4>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{result.reasoning}</p>
               </div>
 
               {/* Missing Information Section */}
               {result.missingInformation && result.missingInformation.length > 0 && (
                 <div className="section-card" style={{ borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-                  <h4 style={{ color: 'var(--p2-orange)' }}>⚠️ Missing Information & Unconfirmed Attributes</h4>
+                  <h4 style={{ color: 'var(--p2-orange)' }}>Missing Information & Unconfirmed Attributes</h4>
                   <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     {result.missingInformation.map((item, idx) => (
                       <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
@@ -150,7 +150,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
               {/* Linked Incidents & Graph Linkage */}
               {result.linkedIncidents && result.linkedIncidents.length > 0 && (
                 <div className="section-card">
-                  <h4>🔗 Related Historical Incidents & Graph Links</h4>
+                  <h4>Related Historical Incidents & Graph Links</h4>
                   <div className="linked-list">
                     {result.linkedIncidents.map((link, idx) => (
                       <div key={idx} className="linked-item">
@@ -176,12 +176,12 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
 
       <div className="result-footer">
         <button onClick={onReset} className="reset-button">
-          ↻ Start New Triage Session
+          Start New Triage Session
         </button>
 
         {onEscalate && (
           <button onClick={onEscalate} className="escalate-button">
-            🚨 Escalate to Human IT Agent
+            Escalate to Human IT Agent
           </button>
         )}
       </div>

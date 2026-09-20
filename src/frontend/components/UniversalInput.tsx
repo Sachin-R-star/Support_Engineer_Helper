@@ -38,12 +38,12 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
     'Outlook crashes when opening attachments'
   ];
 
-  const categories: { category: IncidentCategory; label: string; desc: string; icon: string }[] = [
-    { category: 'NETWORK', label: 'Network & VPN', desc: 'Wi-Fi, VPN disconnects, internet speed & gateway issues', icon: '📶' },
-    { category: 'ACCOUNT', label: 'Account & Password', desc: 'Password reset, SSO lockout, MFA & identity access', icon: '🔐' },
-    { category: 'APPLICATION', label: 'Apps & Software', desc: 'Outlook, Teams, crash logs & software licenses', icon: '💻' },
-    { category: 'DEVICE', label: 'Hardware & OS', desc: 'BSOD, battery, docking station & display adapters', icon: '🖥️' },
-    { category: 'OTHER', label: 'General IT Request', desc: 'Peripherals, workspace access & unlisted tech support', icon: '🛠️' }
+  const categories: { category: IncidentCategory; label: string; desc: string }[] = [
+    { category: 'NETWORK', label: 'Network & VPN', desc: 'Wi-Fi, VPN disconnects, internet speed & gateway issues' },
+    { category: 'ACCOUNT', label: 'Account & Password', desc: 'Password reset, SSO lockout, MFA & identity access' },
+    { category: 'APPLICATION', label: 'Apps & Software', desc: 'Outlook, Teams, crash logs & software licenses' },
+    { category: 'DEVICE', label: 'Hardware & OS', desc: 'BSOD, battery, docking station & display adapters' },
+    { category: 'OTHER', label: 'General IT Request', desc: 'Peripherals, workspace access & unlisted tech support' }
   ];
 
   return (
@@ -91,11 +91,10 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
       </form>
 
       <div className="sample-queries">
-        <span className="sample-title">⚡ Common Support Scenarios:</span>
+        <span className="sample-title">Common Support Scenarios:</span>
         <div className="chips">
           {sampleQueries.map((sample, idx) => (
             <button key={idx} type="button" className="chip" onClick={() => setQuery(sample)}>
-              <span className="chip-icon">💬</span>
               <span>{sample}</span>
             </button>
           ))}
@@ -114,7 +113,6 @@ export const UniversalInput: React.FC<UniversalInputProps> = ({
               onClick={() => onSelectCategory && onSelectCategory(cat.category)}
             >
               <div className="category-card-header">
-                <span className="cat-icon">{cat.icon}</span>
                 <h5>{cat.label}</h5>
               </div>
               <p>{cat.desc}</p>
