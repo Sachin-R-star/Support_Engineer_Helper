@@ -63,6 +63,8 @@ interface VerificationLoopPanelProps {
   attemptedActions?: AttemptedAction[];
   onActionVerified: (result: any) => void;
   isResolved?: boolean;
+  followUpTicket?: { id: string; ticketNumber: string; summary: string } | null;
+  onStartNewTriage?: (query?: string) => void;
 }
 
 export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
@@ -73,7 +75,9 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
   expectedResult,
   attemptedActions = [],
   onActionVerified,
-  isResolved = false
+  isResolved = false,
+  followUpTicket = null,
+  onStartNewTriage
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<
     'YES_RESOLVED' | 'NO_FAILED' | 'PARTIALLY_RESOLVED' | 'SOMETHING_CHANGED'
@@ -138,11 +142,58 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
     <div className="verification-loop-panel section-card">
       {/* Resolution Success Banner */}
       {isResolved ? (
-        <div className="resolution-success-banner">
-          <div className="banner-text">
-            <h3>Incident Confirmed Resolved</h3>
-            <p>User confirmed that the troubleshooting action successfully restored normal functionality.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="resolution-success-banner">
+            <div className="banner-text">
+              <h3>Incident Confirmed Resolved</h3>
+              <p>User confirmed that the troubleshooting action successfully restored normal functionality.</p>
+            </div>
           </div>
+          {followUpTicket && (
+            <div 
+              className="followup-rectangular-box" 
+              style={{ 
+                background: 'rgba(245, 158, 11, 0.12)', 
+                border: '1.5px solid #f59e0b', 
+                borderRadius: '8px', 
+                padding: '0.85rem 1.25rem', 
+                display: 'flex', 
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                flexWrap: 'wrap'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: '1 1 250px' }}>
+                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>⚡</span> Follow-Up Ticket Generated & Linked: <strong>{followUpTicket.ticketNumber}</strong>
+                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                  {followUpTicket.summary}
+                </span>
+              </div>
+              {onStartNewTriage && (
+                <button
+                  type="button"
+                  onClick={() => onStartNewTriage(followUpTicket.summary.replace(/^New symptom reported:\s*/i, '').replace(/^New symptom after [^:]+:\s*/i, ''))}
+                  style={{
+                    padding: '0.55rem 1.1rem',
+                    backgroundColor: '#f59e0b',
+                    color: '#111',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Start AI Triage for New Issue →
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         /* Interactive Hero Next Best Action & Verification Form */
@@ -253,9 +304,58 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
 
             {error && <div className="form-error-alert">{error}</div>}
 
-            <button type="submit" disabled={isSubmitting} className="submit-verification-btn">
-              {isSubmitting ? 'Recording Outcome...' : 'Submit Action Outcome & Continue'}
-            </button>
+            <div className="submit-action-and-followup-row" style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'stretch', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+              <button type="submit" disabled={isSubmitting} className="submit-verification-btn" style={{ flex: '1 1 240px', minWidth: '200px', margin: 0 }}>
+                {isSubmitting ? 'Recording Outcome...' : 'Submit Action Outcome & Continue'}
+              </button>
+
+              {followUpTicket && (
+                <div 
+                  className="followup-rectangular-box" 
+                  style={{ 
+                    flex: '1 1 320px', 
+                    background: 'rgba(245, 158, 11, 0.12)', 
+                    border: '1.5px solid #f59e0b', 
+                    borderRadius: '8px', 
+                    padding: '0.65rem 1rem', 
+                    display: 'flex', 
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: '1 1 180px' }}>
+                    <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>⚡</span> Follow-Up Ticket: <strong>{followUpTicket.ticketNumber}</strong>
+                    </span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.775rem', lineHeight: '1.25' }}>
+                      {followUpTicket.summary}
+                    </span>
+                  </div>
+                  {onStartNewTriage && (
+                    <button
+                      type="button"
+                      onClick={() => onStartNewTriage(followUpTicket.summary.replace(/^New symptom reported:\s*/i, '').replace(/^New symptom after [^:]+:\s*/i, ''))}
+                      style={{
+                        padding: '0.45rem 0.9rem',
+                        backgroundColor: '#f59e0b',
+                        color: '#111',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Start AI Triage →
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </form>
         </div>
       )}

@@ -33,10 +33,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
 
   const [isTechExpanded, setIsTechExpanded] = useState<boolean>(false);
 
-  // Automatically scroll to the top of the page when the solution screen mounts or followUpTicket is set
+  // Automatically scroll to the top of the page when the solution screen mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [followUpTicket]);
+  }, []);
 
   const handleActionVerified = (res: any) => {
     if (res.attemptedActionsHistory) {
@@ -71,11 +71,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
         setConfidence(res.updatedConfidence);
       }
     }
-
-    // Scroll smoothly to top so user can see follow-up ticket banner & status updates
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
   };
 
   return (
@@ -104,34 +99,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
         <div className="recovery-banner">
           <h4>Uncertainty Guidance</h4>
           <p>{recovery.userMessage}</p>
-        </div>
-      )}
-
-      {followUpTicket && (
-        <div className="section-card warning-card" style={{ borderColor: 'var(--p2-orange)', background: 'rgba(245, 158, 11, 0.08)', margin: '1rem 0' }}>
-          <h4 style={{ color: '#f59e0b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>⚡</span> Follow-Up Ticket Generated & Linked
-          </h4>
-          <p style={{ marginTop: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            New symptom detected! Follow-up incident <strong>{followUpTicket.ticketNumber}</strong> (<em>{followUpTicket.summary}</em>) has been automatically created, linked, and prioritized for resolution.
-          </p>
-          {onStartNewTriage && (
-            <button
-              onClick={() => onStartNewTriage(followUpTicket.summary.replace(/^New symptom reported:\s*/i, '').replace(/^New symptom after [^:]+:\s*/i, ''))}
-              style={{
-                marginTop: '0.75rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--p2-orange)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              Start AI Triage for New Issue →
-            </button>
-          )}
         </div>
       )}
 
@@ -170,6 +137,8 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
           attemptedActions={attemptedActions}
           onActionVerified={handleActionVerified}
           isResolved={isResolved}
+          followUpTicket={followUpTicket}
+          onStartNewTriage={onStartNewTriage}
         />
 
         {/* Collapsible Engineer Technical Diagnostics Boundary */}
