@@ -111,18 +111,27 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
     switch (status) {
       case 'YES_RESOLVED':
       case 'SUCCESS':
-        return { icon: '✓', label: 'Successful (Resolved)', className: 'status-success' };
+        return { icon: '✓', label: 'Resolved', className: 'status-success' };
       case 'NO_FAILED':
       case 'FAILURE':
-        return { icon: '✗', label: 'Failed / Unresolved', className: 'status-failed' };
+        return { icon: '✕', label: 'Unresolved', className: 'status-failed' };
       case 'PARTIALLY_RESOLVED':
       case 'PARTIAL':
         return { icon: '!', label: 'Partially Resolved', className: 'status-partial' };
       case 'SOMETHING_CHANGED':
-        return { icon: '~', label: 'Something Changed / New Error', className: 'status-changed' };
+        return { icon: '~', label: 'Something Changed', className: 'status-changed' };
       default:
         return { icon: '•', label: status, className: 'status-default' };
     }
+  };
+
+  const isHumanFeedback = (notes?: string) => {
+    if (!notes) return false;
+    const trimmed = notes.trim();
+    if (!trimmed) return false;
+    if (trimmed.toLowerCase().startsWith('result recorded as')) return false;
+    if (/^(YES_RESOLVED|NO_FAILED|PARTIALLY_RESOLVED|SOMETHING_CHANGED)$/i.test(trimmed)) return false;
+    return true;
   };
 
   return (
@@ -181,11 +190,12 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
               )}
             </div>
 
-            <div className="card-footer-note">
-              <span className="footer-note-bold">
-                IF THIS DOESN'T WORK:
-              </span>
-            </div>
+            {fallbackAction && (
+              <div className="card-footer-note">
+                <span className="footer-note-bold">IF THIS DOESN'T WORK:</span>
+                <span className="footer-note-text">{formatActionLabel(fallbackAction).heroTitle}</span>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="verification-form">
@@ -207,7 +217,7 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
                 className={`choice-btn ${selectedStatus === 'NO_FAILED' ? 'selected danger' : ''}`}
                 onClick={() => setSelectedStatus('NO_FAILED')}
               >
-                <span className="btn-icon">✗</span>
+                <span className="btn-icon">✕</span>
                 <span className="btn-label">No, Didn't Work</span>
               </button>
 
@@ -252,28 +262,42 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
 
       {/* Attempted Actions History List */}
       <div className="attempted-actions-section mt-6 border-t border-zinc-800 pt-4">
-        <h4 className="panel-title">Troubleshooting History & Attempted Actions</h4>
+        <div className="attempted-header-bar">
+          <h4 className="panel-title">Troubleshooting History</h4>
+          {attemptedActions.length > 0 && (
+            <span className="history-count-badge">{attemptedActions.length} step{attemptedActions.length > 1 ? 's' : ''}</span>
+          )}
+        </div>
         {attemptedActions.length === 0 ? (
           <p className="empty-subtext">No troubleshooting steps have been executed for this ticket yet.</p>
         ) : (
           <div className="attempted-list">
             {attemptedActions.map((act, idx) => {
               const badge = getStatusBadge(act.resultStatus);
+              // Clean description string to remove raw leading X or formatting glitches
+              let cleanDesc = act.actionDescription.replace(/^x/i, '').trim();
+              cleanDesc = formatActionLabel(cleanDesc).heroTitle;
+              
               return (
-                <div key={act.id || idx} className={`attempted-item ${badge.className}`}>
-                  <div className="item-header">
-                    <span className="badge-icon">{badge.icon}</span>
-                    <span className="item-title">{act.actionDescription}</span>
-                    <span className={`status-pill ${badge.className}`}>{badge.label}</span>
+                <div key={act.id || idx} className={`attempted-item-card ${badge.className}`}>
+                  <div className="item-main-row">
+                    <div className="item-title-group">
+                      <span className={`status-icon-badge ${badge.className}`}>{badge.icon}</span>
+                      <span className="item-title">{cleanDesc}</span>
+                    </div>
+                    <div className="item-meta-group">
+                      <span className={`status-pill ${badge.className}`}>{badge.label}</span>
+                      <span className="item-time">
+                        {new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
                   </div>
-                  {act.userNotes && (
-                    <div className="item-notes">
-                      <strong>Feedback:</strong> {act.userNotes}
+                  {isHumanFeedback(act.userNotes) && (
+                    <div className="item-notes-box">
+                      <span className="notes-label">User Feedback:</span>
+                      <span className="notes-text">{act.userNotes}</span>
                     </div>
                   )}
-                  <div className="item-time">
-                    {new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
                 </div>
               );
             })}

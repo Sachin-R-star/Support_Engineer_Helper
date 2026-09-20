@@ -32,7 +32,13 @@ export const App: React.FC = () => {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <div className="logo-icon">IT</div>
+          <div className="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+          </div>
           <div>
             <h1>Enterprise IT Support Triage</h1>
             <span className="sub-brand">AI-Powered ITSM Diagnostic Assistant</span>

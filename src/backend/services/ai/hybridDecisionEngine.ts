@@ -27,9 +27,17 @@ export class HybridDecisionEngine {
       return;
     }
 
-    const apiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
     if (apiKey) {
-      this.provider = new OpenAiCompatibleProvider(apiKey);
+      let endpoint = process.env.LLM_ENDPOINT || process.env.OPENAI_ENDPOINT;
+      let model = process.env.LLM_MODEL || process.env.OPENAI_MODEL;
+
+      if (apiKey.startsWith('gsk_') || process.env.GROQ_API_KEY) {
+        endpoint = endpoint || 'https://api.groq.com/openai/v1/chat/completions';
+        model = model || 'llama-3.3-70b-versatile';
+      }
+
+      this.provider = new OpenAiCompatibleProvider(apiKey, endpoint, model);
     } else {
       this.provider = new MockAiProvider();
     }
