@@ -7,6 +7,7 @@ interface ResultScreenProps {
   result: FinalTriageResult;
   onReset: () => void;
   onEscalate?: () => void;
+  onStartNewTriage?: (query?: string) => void;
 }
 
 function formatCategory(category: string): string {
@@ -17,7 +18,7 @@ function formatCategory(category: string): string {
   return matched || primary;
 }
 
-export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onEscalate }) => {
+export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onEscalate, onStartNewTriage }) => {
   const priorityStr = (result.priority || 'P3_MEDIUM').toString();
   
   const rec = result.recommendation;
@@ -53,6 +54,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
       ]);
     }
 
+    if (res.followUpIncident) {
+      setFollowUpTicket(res.followUpIncident);
+    }
+
     if (res.isResolved) {
       setIsResolved(true);
     } else {
@@ -64,9 +69,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
       }
       if (typeof res.updatedConfidence === 'number') {
         setConfidence(res.updatedConfidence);
-      }
-      if (res.followUpIncident) {
-        setFollowUpTicket(res.followUpIncident);
       }
     }
   };
@@ -108,6 +110,23 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
           <p style={{ marginTop: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             New symptom detected! Follow-up incident <strong>{followUpTicket.ticketNumber}</strong> (<em>{followUpTicket.summary}</em>) has been automatically created, linked, and prioritized for resolution.
           </p>
+          {onStartNewTriage && (
+            <button
+              onClick={() => onStartNewTriage(followUpTicket.summary.replace(/^New symptom reported:\s*/i, '').replace(/^New symptom after [^:]+:\s*/i, ''))}
+              style={{
+                marginTop: '0.75rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: 'var(--p2-orange)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Start AI Triage for New Issue →
+            </button>
+          )}
         </div>
       )}
 

@@ -153,6 +153,7 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
           result={session.finalTriageResult} 
           onReset={handleReset} 
           onEscalate={handleEscalate}
+          onStartNewTriage={(query?: string) => handleStart(query || '')}
         />
       )}
 

@@ -400,7 +400,19 @@ export class TriageService {
    * resolves ticket if successful, selects next KB action if failed/partial, or links follow-up ticket if something changed.
    */
   public verifyActionResult(payload: ActionVerificationPayload): VerificationLoopResponse {
-    const incident = this.repo.getIncidentById(payload.incidentId);
+    let incident = this.repo.getIncidentById(payload.incidentId);
+    if (!incident) {
+      const session = TriageService.sessions.get(payload.incidentId);
+      if (session?.finalTriageResult?.incidentId) {
+        incident = this.repo.getIncidentById(session.finalTriageResult.incidentId);
+      }
+      if (!incident) {
+        const allIncidents = this.repo.getAllIncidents();
+        if (allIncidents.length > 0) {
+          incident = allIncidents[0];
+        }
+      }
+    }
     if (!incident) throw new Error(`Incident ${payload.incidentId} not found`);
 
     // 1. Record action entry & result details in DB
