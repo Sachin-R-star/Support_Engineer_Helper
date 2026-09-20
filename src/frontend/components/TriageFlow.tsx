@@ -156,7 +156,7 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
         />
       )}
 
-      {session && session.adaptiveStep && (
+      {session && session.currentStep === 'PROGRESSIVE_QUESTION' && session.adaptiveStep && (
         <AdaptiveStepPanel adaptiveStep={session.adaptiveStep} />
       )}
     </div>
