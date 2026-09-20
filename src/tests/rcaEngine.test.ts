@@ -30,7 +30,7 @@ describe('Explainable Root Cause Analysis (RCA) Engine Test Suite', () => {
 
   const createIncHelper = (overrides: any = {}) => {
     const id = overrides.id || `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const ticketNumber = overrides.ticketNumber || `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const ticketNumber = overrides.ticketNumber || `INC-2026-${Math.floor(1000 + Math.random() * 9000)}-${Math.random().toString(36).substring(2, 6)}`;
     return memoryService.createIncident({
       id,
       ticketNumber,

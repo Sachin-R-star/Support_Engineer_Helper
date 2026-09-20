@@ -141,13 +141,13 @@ export const VerificationLoopPanel: React.FC<VerificationLoopPanelProps> = ({
       ) : (
         /* Interactive Hero Next Best Action & Verification Form */
         <div className="verification-form-container">
-          <div className="hero-action-card mb-6 p-5 rounded-xl border-2 border-indigo-500/60 bg-gradient-to-br from-indigo-950/40 via-slate-900 to-indigo-900/30 shadow-xl">
+          <div className="hero-action-card mb-6 p-5 rounded-xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900/90 via-black to-zinc-950 shadow-2xl">
             <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-bold text-indigo-300 border border-indigo-500/40 tracking-wider">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-3 py-1 text-xs font-bold text-zinc-100 border border-zinc-600/50 tracking-wider">
                 🚀 NEXT BEST ACTION
               </span>
               {fallbackAction && (
-                <span className="text-[11px] text-slate-400" title={`Fallback: ${fallbackAction}`}>
+                <span className="text-[11px] text-zinc-400" title={`Fallback: ${fallbackAction}`}>
                   Fallback available
                 </span>
               )}

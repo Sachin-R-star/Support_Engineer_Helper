@@ -1,39 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-dark: #090d16;
-  --bg-card: #111827;
-  --bg-card-hover: #1f2937;
-  --bg-glass: rgba(17, 24, 39, 0.75);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(99, 102, 241, 0.6);
+  --bg-dark: #050507;
+  --bg-card: #0d0d11;
+  --bg-card-hover: #16161c;
+  --bg-glass: rgba(10, 10, 14, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-focus: rgba(255, 255, 255, 0.3);
 
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
 
   --accent-primary: #6366f1;
   --accent-hover: #4f46e5;
-  --accent-light: #818cf8;
+  --accent-light: #a5b4fc;
 
-  --p1-red: #ef4444;
-  --p1-bg: rgba(239, 68, 68, 0.15);
-  --p2-orange: #f59e0b;
-  --p2-bg: rgba(245, 158, 11, 0.15);
-  --p3-blue: #06b6d4;
-  --p3-bg: rgba(6, 182, 212, 0.15);
-  --p4-green: #10b981;
-  --p4-bg: rgba(16, 185, 129, 0.15);
+  --p1-red: #f87171;
+  --p1-bg: rgba(248, 113, 113, 0.12);
+  --p2-orange: #fbbf24;
+  --p2-bg: rgba(251, 191, 36, 0.12);
+  --p3-blue: #38bdf8;
+  --p3-bg: rgba(56, 189, 248, 0.12);
+  --p4-green: #34d399;
+  --p4-bg: rgba(52, 211, 153, 0.12);
 
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 14px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 14px 0 rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.25);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 4px 20px 0 rgba(0, 0, 0, 0.9);
+  --shadow-lg: 0 12px 40px -5px rgba(0, 0, 0, 0.95);
+  --shadow-glow: 0 0 25px rgba(255, 255, 255, 0.06);
 }
 
 * {
@@ -45,6 +45,7 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -70,7 +71,7 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: space-between;
   padding: 1rem 2rem;
   background: var(--bg-glass);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
@@ -86,7 +87,8 @@ h1, h2, h3, h4, h5, h6 {
 .logo-icon {
   width: 38px;
   height: 38px;
-  background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+  background: linear-gradient(135deg, #27272a 0%, #09090b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
   font-weight: 700;
   font-family: 'Outfit', sans-serif;
@@ -95,7 +97,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .brand h1 {
@@ -112,7 +114,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .nav-tabs {
   display: flex;
-  background: rgba(0, 0, 0, 0.3);
+  background: #09090b;
   padding: 4px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
@@ -132,9 +134,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-tabs button.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  background: #18181b;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: var(--shadow-sm);
 }
 
