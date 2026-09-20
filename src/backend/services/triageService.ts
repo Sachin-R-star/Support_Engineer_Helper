@@ -361,6 +361,9 @@ export class TriageService {
       confidenceScore: finalResult.confidence
     });
 
+    finalResult.incidentId = newIncident.id;
+    finalResult.ticketNumber = newIncident.ticketNumber;
+
     for (const [qId, ans] of Object.entries(state.answers)) {
       this.repo.addAnswer({
         id: `ans_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,

@@ -132,6 +132,8 @@ export interface AdaptiveStepPayload {
 }
 
 export interface FinalTriageResult {
+  incidentId?: string;
+  ticketNumber?: string;
   category: IncidentCategory;
   issueType: string;
   priority: IncidentPriority;
