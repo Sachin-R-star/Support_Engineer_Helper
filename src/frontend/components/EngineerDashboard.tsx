@@ -1,3 +1,8 @@
+import React, { useState, useEffect } from 'react';
+import { DashboardStats, IncidentRecord, RecurringPattern } from '../types/triage';
+import { ApiClient } from '../services/apiClient';
+import { EngineerIncidentInspector } from './EngineerIncidentInspector';
+
 // Professional Enterprise SVG Icons
 const IconOpenIncidents: React.FC<{ className?: string }> = ({ className = "icon-kpi" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
