@@ -32,8 +32,8 @@ export const App: React.FC = () => {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <div className="logo-icon logo-circle" style={{ borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '2px', overflow: 'hidden' }}>
-            <img src="/favicon.svg" alt="Tech Support Logo" width="32" height="32" style={{ borderRadius: '50%', objectFit: 'contain' }} />
+          <div className="logo-icon logo-circle" style={{ borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', border: '2px solid rgba(255, 255, 255, 0.3)', padding: '1px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)' }}>
+            <img src="/logo.svg" alt="IT Support Triage Logo" width="38" height="38" style={{ borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <div>
             <h1>Enterprise IT Support Triage</h1>
