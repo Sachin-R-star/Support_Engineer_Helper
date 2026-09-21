@@ -1,6 +1,6 @@
 # Enterprise IT Support Triage Assistant
 
-A production-grade, AI-assisted ITSM Diagnostic Engine and Support Engineer Workbench designed for enterprise IT service desks.
+An AI-assisted enterprise ITSM Diagnostic Engine and Support Engineer Workbench designed for enterprise IT service desks.
 
 The system combines **deterministic Knowledge Base taxonomy rules**, **explainable priority scoring**, **Hybrid AI decision engine**, **Adaptive Troubleshooting Information-Gain heuristic**, **Explainable Root Cause Analysis (RCA)**, **Human-in-the-Loop Governance**, **SQLite incident memory**, **graph relationship detection**, **non-dead-ending recovery pathways**, and **strict AI reliability guardrails** to guide users and support engineers from initial problem input to audited resolution.
 
@@ -60,7 +60,7 @@ The Enterprise IT Support Triage Assistant provides a hybrid decision architectu
 ### Tech Stack
 - **Backend**: Node.js, Express 5, TypeScript, Better-SQLite3, Zod.
 - **Frontend**: React 19, TypeScript, Vanilla CSS (Linear/Notion-inspired dark mode), Vite.
-- **Testing**: Vitest (19 test files, 185 unit & integration tests).
+- **Testing**: Vitest (19 test files, 210 unit & integration tests).
 - **Execution & Tooling**: TSX, Vite.
 
 ---
@@ -95,7 +95,7 @@ Tracks user confirmation of troubleshooting outcomes (`YES_RESOLVED`, `NO_FAILED
 ### Installation
 ```bash
 git clone <repository-url>
-cd worlds_best_project
+cd Support_Engineer_Helper
 npm install
 ```
 
@@ -109,17 +109,23 @@ DATABASE_PATH=./src/backend/data/triage_memory.db
 
 ### Run Server & Production Build
 ```bash
+# Start Backend Server (Dev):
+npm run dev
+
+# Start Frontend App (Dev):
+npm run dev:frontend
+
 # Production Build:
 npm run build
 
-# Start Backend Server:
-npm run dev
+# Start Production Server:
+npm start
 ```
 Open `http://localhost:3000` (or live at [https://support-engineer-helper.vercel.app/](https://support-engineer-helper.vercel.app/)) in your web browser.
 
 ### Run Automated Tests
 ```bash
-# Run 185 Unit & Integration Tests:
+# Run 210 Unit & Integration Tests:
 npm test
 
 # Run TypeScript Type Check:
@@ -131,11 +137,11 @@ npx tsc --noEmit
 ## 5. Guided Demo Sequence
 
 1. **Dashboard Overview**: Open `http://localhost:3000` or [https://support-engineer-helper.vercel.app/](https://support-engineer-helper.vercel.app/). Observe real-time queue metrics and pattern alerts.
-2. **New Triage Session**: Enter `"Wi-Fi is connected but I cannot access websites. Teams is also not working and I have an important client call in 30 minutes."`
-3. **Progressive Question & Adaptive UI**: Answer the high-discrimination question. View the "Why this next step?" card.
-4. **Diagnosis & Priority**: View `P1_CRITICAL` priority, confidence rating, missing information, and grounded recommendation.
-5. **Verification Loop**: Test selecting `NO_FAILED` -> notice confidence updates and next grounded step is selected.
-6. **RCA & Governance**: View RCA candidate hypotheses, inspect evidence provenance, test human `CONFIRMED` / `REJECTED` decision governance.
+2. **New Triage Session**: Enter an IT support issue query describing symptoms or problems.
+3. **Progressive Question & Adaptive UI**: Answer adaptive diagnostic questions. View the "Why this next step?" card explaining the decision score.
+4. **Diagnosis & Priority**: Review calculated priority levels, confidence rating, missing information, and grounded KB recommendations.
+5. **Verification Loop**: Confirm or update troubleshooting outcome state to let the engine recalculate confidence and present next steps.
+6. **RCA & Governance**: Review candidate root cause hypotheses, inspect evidence provenance, and execute human `CONFIRMED` or `REJECTED` decision governance.
 
 ---
 
