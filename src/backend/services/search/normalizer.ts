@@ -8,7 +8,7 @@ export class TextNormalizer {
     // Hardware / Screen / Freeze synonyms
     'screen': ['skreen', 'skren', 'display', 'pantalla', 'monitor'],
     'blue screen': ['bsod', 'kernel panic', 'pantalla azul', 'crash', 'blue skreen'],
-    'freeze': ['hanging', 'hangs', 'hang', 'frozen', 'freezes', 'freezing', 'unresponsive', 'stuck', 'lockup', 'hangs up'],
+    'freeze': ['hanging', 'hangs', 'hang', 'frozen', 'freezes', 'freezing', 'unresponsive', 'lockup', 'hangs up'],
     'battery': ['power', 'bateria', 'charger', 'cargador', 'overheating'],
     
     // Network / VPN / Wi-Fi synonyms
@@ -44,6 +44,21 @@ export class TextNormalizer {
     const norm = this.normalize(text);
     if (!norm) return [];
     return norm.split(' ').filter(w => w.length > 0);
+  }
+
+  /**
+   * Returns expanded synonyms for a single query token.
+   */
+  public static getSynonymsForToken(token: string): string[] {
+    const norm = this.normalize(token);
+    const syns: string[] = [norm];
+    for (const [canonical, synonyms] of Object.entries(this.synonymMap)) {
+      const allTerms = [canonical, ...synonyms];
+      if (allTerms.some(t => t === norm || (t.length >= 3 && (norm.startsWith(t) || t.startsWith(norm))))) {
+        allTerms.forEach(t => syns.push(t));
+      }
+    }
+    return Array.from(new Set(syns));
   }
 
   /**

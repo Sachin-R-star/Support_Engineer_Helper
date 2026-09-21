@@ -32,6 +32,8 @@ export class RecommendationService {
     // 1. Safety Hazard Override Rule: Swollen Battery -> Immediate hardware swap
     if (answerValues.includes('battery_swollen')) {
       return {
+        issueId: selectedIssue.id,
+        category,
         action: 'SAFETY MANDATE: Immediately power off laptop, disconnect AC charger, and do not attempt to charge.',
         reason: 'Physical battery swelling poses a thermal expansion and safety hazard.',
         expected_result: 'Device remains thermally safe until physical battery replacement.',
@@ -41,13 +43,18 @@ export class RecommendationService {
           tier: 'ON_SITE_BAR',
           reason: 'Physical hardware battery replacement required at On-Site IT Bar.'
         },
-        confidence: 98
+        confidence: 98,
+        kbSource: selectedIssue.display_name,
+        prerequisites: selectedIssue.required_information,
+        evidenceBasis: Object.keys(answers)
       };
     }
 
     // 2. Security Incident Override Rule: Credential Theft / Phishing Link Clicked -> SIRT Escalation
     if (answerValues.includes('creds_exposed') || answerValues.includes('file_executed')) {
       return {
+        issueId: selectedIssue.id,
+        category,
         action: 'SECURITY MANDATE: Disconnect device from corporate Wi-Fi/Ethernet and trigger immediate SSO token revocation.',
         reason: 'Active credential exposure or malicious payload execution detected on workstation.',
         expected_result: 'Corporate network assets isolated and compromised session tokens invalidated.',
@@ -57,7 +64,10 @@ export class RecommendationService {
           tier: 'INFOSEC_SIRT',
           reason: 'Active credential theft escalated directly to InfoSec Incident Response Team.'
         },
-        confidence: 95
+        confidence: 95,
+        kbSource: selectedIssue.display_name,
+        prerequisites: selectedIssue.required_information,
+        evidenceBasis: Object.keys(answers)
       };
     }
 
@@ -65,6 +75,8 @@ export class RecommendationService {
     if (confidence < 60) {
       const missingFields = selectedIssue.required_information.slice(0, 2).join(', ');
       return {
+        issueId: selectedIssue.id,
+        category,
         action: kbSteps[0] || 'Perform initial diagnostic assessment and verify system power/network indicators.',
         reason: `Insufficient diagnostic evidence gathered to reach definitive resolution path. Missing information: ${missingFields || 'unconfirmed diagnostic symptoms'}.`,
         expected_result: 'Clarifies preliminary diagnostic symptoms before committing to heavy troubleshooting.',
@@ -74,7 +86,10 @@ export class RecommendationService {
           tier: 'NONE',
           reason: 'Diagnostic evidence insufficient; additional triage input requested before escalation.'
         },
-        confidence
+        confidence,
+        kbSource: selectedIssue.display_name,
+        prerequisites: selectedIssue.required_information,
+        evidenceBasis: Object.keys(answers)
       };
     }
 
@@ -116,7 +131,11 @@ export class RecommendationService {
       selectedIssue.id
     );
 
+    const evidenceBasisList = evidence.map(e => `${e.factKey}: ${e.factValue}`);
+
     return {
+      issueId: selectedIssue.id,
+      category: selectedIssue.category,
       action: groundingCheck.action,
       reason: rationale,
       expected_result: expectedOutcome,
@@ -126,7 +145,10 @@ export class RecommendationService {
         tier: escalationTier,
         reason: escalationReason
       },
-      confidence
+      confidence,
+      kbSource: selectedIssue.display_name,
+      prerequisites: selectedIssue.required_information || [],
+      evidenceBasis: evidenceBasisList
     };
   }
 

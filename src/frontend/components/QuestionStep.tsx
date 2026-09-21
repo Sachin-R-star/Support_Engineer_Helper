@@ -57,6 +57,14 @@ export function sanitizeQuestionText(rawText: string): string {
   return text;
 }
 
+export function sanitizeIssueTypeName(rawName?: string): string {
+  if (!rawName) return '';
+  if (/blue screen|\(bsod\)/i.test(rawName)) {
+    return 'Workstation System Freeze / Performance Hang';
+  }
+  return rawName;
+}
+
 export const QuestionStep: React.FC<QuestionStepProps> = ({
   question,
   issueTypeName,
@@ -145,7 +153,7 @@ export const QuestionStep: React.FC<QuestionStepProps> = ({
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {issueTypeName && <span className="domain-tag">Focus: {issueTypeName}</span>}
+          {issueTypeName && <span className="domain-tag">Focus: {sanitizeIssueTypeName(issueTypeName)}</span>}
           <span className="confidence-meter">
             Certainty: <strong>{confidence}%</strong>
           </span>

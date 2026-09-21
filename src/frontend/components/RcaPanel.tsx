@@ -26,6 +26,11 @@ export const RcaPanel: React.FC<RcaPanelProps> = ({ incidentId }) => {
       setLoading(true);
       setError(null);
       const data = await ApiClient.fetchRca(incidentId);
+      if (data && data.incidentId && data.incidentId !== incidentId) {
+        setError(`Cross-incident security invariant check failed: requested ${incidentId}, received ${data.incidentId}`);
+        setRca(null);
+        return;
+      }
       setRca(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load RCA');

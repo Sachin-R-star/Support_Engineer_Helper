@@ -135,11 +135,11 @@ export class PriorityEngine {
       );
     }
 
-    // 5. Critical System / Workstation Affected
-    const isCriticalSystem = 
+    // 5. Critical System / Infrastructure Affected
+    const isCriticalSystem = Boolean(
       signals?.critical_system_affected ||
-      context?.category === 'DEVICE' ||
-      context?.category === 'NETWORK';
+      /critical server|domain controller|core router|backbone|datacenter|cluster outage/i.test(queryLower)
+    );
 
     if (isCriticalSystem) {
       addFactor(
@@ -147,7 +147,7 @@ export class PriorityEngine {
         config.weights.critical_system_affected,
         config.weights.critical_system_affected,
         config.reasonCodes.CRITICAL_SYSTEM_AFFECTED,
-        'Primary workstation or network gateway infrastructure degraded.'
+        'Critical infrastructure or core enterprise service degraded.'
       );
     }
 
@@ -221,7 +221,7 @@ export class PriorityEngine {
 
     // Determine Final Priority Tier based on Configured Thresholds
     let priority: PriorityLevel = 'LOW';
-    if (isSecurityCompromise || isSafetyHazard || usersScope === 'ENTIRE_ORGANIZATION' || finalScore >= config.thresholds.CRITICAL) {
+    if (isSecurityCompromise || isSafetyHazard || usersScope === 'ENTIRE_ORGANIZATION' || isVip || finalScore >= config.thresholds.CRITICAL) {
       priority = 'CRITICAL';
     } else if (finalScore >= config.thresholds.HIGH) {
       priority = 'HIGH';

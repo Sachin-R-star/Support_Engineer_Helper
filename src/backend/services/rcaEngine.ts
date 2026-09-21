@@ -31,7 +31,12 @@ export class RcaEngine {
     const humanDecisions = this.repo.getRcaHumanDecisions(incidentId);
     const verifications = this.repo.getRcaVerifications(incidentId);
 
-    const issueType = TaxonomyService.findIssueTypeById(incident.issueType) || TaxonomyService.getTaxonomy()[0];
+    const issueType = TaxonomyService.findIssueTypeById(incident.issueType) || TaxonomyService.getFallbackIssueType();
+    const refinedDisplayName = TaxonomyService.getRefinedIssueDisplayName(
+      issueType,
+      incident.description,
+      answers
+    );
 
     // Group decisions and verifications by candidate ID
     const decisionsByCandidate = new Map<string, typeof humanDecisions>();
@@ -329,7 +334,7 @@ export class RcaEngine {
 
     return {
       incidentId,
-      currentDiagnosis: `Current Triage Diagnosis: ${issueType.display_name} (${issueType.category}/${issueType.subdomain})`,
+      currentDiagnosis: `Current Triage Diagnosis: ${refinedDisplayName} (${issueType.category}/${issueType.subdomain})`,
       confidenceScore: incident.confidenceScore,
       possibleRootCauses,
       verifiedRootCause,

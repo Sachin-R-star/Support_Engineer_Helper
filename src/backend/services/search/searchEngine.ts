@@ -64,12 +64,33 @@ export class UniversalSearchEngine implements ISearchProvider {
       // C. Keyword & Synonym Tokens matching (+20 points per hit)
       const issueKeywords = issue.keywords.map(k => TextNormalizer.normalize(k));
       let keywordHits = 0;
+      const matchedKwSet = new Set<string>();
 
-      for (const qToken of expandedTokens) {
-        for (const kw of issueKeywords) {
-          if (kw === qToken || (qToken.length > 3 && (kw.includes(qToken) || qToken.includes(kw)))) {
+      for (const kw of issueKeywords) {
+        if (matchedKwSet.has(kw)) continue;
+        const kwWords = kw.split(' ').filter(w => w.length > 0);
+
+        if (kwWords.length > 1) {
+          // Multi-word phrase keyword: ALL component words must be matched by query tokens or fuzzy tokens
+          const allWordsMatch = kwWords.every(w =>
+            expandedTokens.some(qToken =>
+              qToken === w || (qToken.length >= 4 && (w.includes(qToken) || qToken.includes(w) || FuzzyMatcher.isFuzzyMatch(qToken, w, 0.70)))
+            )
+          );
+          if (allWordsMatch) {
             keywordHits++;
-            matchReasons.push(`Matched keyword/synonym: "${kw}"`);
+            matchedKwSet.add(kw);
+            matchReasons.push(`Matched phrase keyword: "${kw}"`);
+          }
+        } else {
+          // Single-word keyword: check token equality, stem prefix or fuzzy token hit
+          for (const qToken of expandedTokens) {
+            if (kw === qToken || (qToken.length >= 3 && (kw === qToken || qToken.startsWith(kw) || kw.startsWith(qToken)))) {
+              keywordHits++;
+              matchedKwSet.add(kw);
+              matchReasons.push(`Matched keyword/synonym: "${kw}"`);
+              break;
+            }
           }
         }
       }

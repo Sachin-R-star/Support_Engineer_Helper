@@ -320,9 +320,15 @@ export class TriageService {
 
     const fullReasoning = `${priorityReasoning} Classified as ${issueType.display_name} under ${issueType.category}. Diagnostic confidence rated at ${confidence}%.`;
 
+    const refinedDisplayName = TaxonomyService.getRefinedIssueDisplayName(
+      issueType,
+      state.originalInput,
+      state.answers
+    );
+
     const finalResult: FinalTriageResult = {
       category: issueType.category,
-      issueType: issueType.display_name,
+      issueType: refinedDisplayName,
       priority: priority as IncidentPriority,
       missingInformation,
       recommendedNextStep: recommendation.action,
@@ -443,18 +449,15 @@ export class TriageService {
     const attemptedHistory = this.repo.getAttemptedActionsForIncident(incident.id);
     const previousActionDescriptions = attemptedHistory.map(a => a.actionDescription);
 
-    const issueType = TaxonomyService.findIssueTypeById(incident.issueType) || TaxonomyService.getTaxonomy()[0];
+    const issueType = TaxonomyService.findIssueTypeById(incident.issueType) || TaxonomyService.getFallbackIssueType();
 
     // 3. Branch handling by ActionResultStatus & User Notes symptom evaluation
     let matchedNewIssue: KbIssueDefinition | null = null;
     if (payload.userNotes && payload.userNotes.trim().length > 3) {
-      // Evaluate new symptom in COMBINED context of original incident + previous actions + new symptom
-      const combinedContext = `${incident.description} ${payload.actionDescription} ${payload.userNotes.trim()}`;
-      const newSymptomMatches = TaxonomyService.matchCandidatesFromQuery(combinedContext);
-      // Require high confidence (>= 70%) for a new symptom to re-classify domain
-      const topMatch = newSymptomMatches.find(m => m.issueType.id !== issueType.id && m.confidence >= 70);
-      if (topMatch) {
-        matchedNewIssue = topMatch.issueType;
+      // Evaluate new symptom directly from user feedback
+      const newSymptomMatches = TaxonomyService.matchCandidatesFromQuery(payload.userNotes.trim());
+      if (newSymptomMatches.length > 0) {
+        matchedNewIssue = newSymptomMatches[0].issueType;
       }
     }
 
@@ -513,7 +516,7 @@ export class TriageService {
 
       const followUpId = `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const followUpTicketNum = `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      const targetIssue = matchedNewIssue || issueType;
+      const targetIssue = matchedNewIssue || TaxonomyService.getFallbackIssueType();
 
       const createdFollowUp = this.memoryService.createIncident({
         id: followUpId,

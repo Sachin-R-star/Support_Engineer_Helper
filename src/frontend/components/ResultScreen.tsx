@@ -129,7 +129,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
       <div className="result-body">
         {/* Troubleshooting Verification Loop Panel */}
         <VerificationLoopPanel
-          incidentId={result.incidentId || result.linkedIncidents?.[0]?.incidentId || 'sess_active'}
+          incidentId={result.incidentId || 'sess_active'}
           currentAction={currentAction}
           fallbackAction={fallbackAction}
           reason={rec?.reason}
@@ -195,9 +195,9 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ result, onReset, onE
               )}
 
               {/* Explainable Root Cause Analysis (RCA) Section */}
-              {result.linkedIncidents && result.linkedIncidents[0]?.incidentId && (
-                <RcaPanel incidentId={result.linkedIncidents[0].incidentId} />
-              )}
+              {result.incidentId ? (
+                <RcaPanel incidentId={result.incidentId} />
+              ) : null}
             </div>
           )}
         </div>

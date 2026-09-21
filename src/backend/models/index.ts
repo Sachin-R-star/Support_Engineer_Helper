@@ -230,12 +230,18 @@ export interface EscalationDetail {
 }
 
 export interface RecommendationPayload {
+  incidentId?: string;
+  issueId?: string;
+  category: IncidentCategory;
   action: string;
   reason: string;
   expected_result: string;
   fallback_action: string;
   escalation: EscalationDetail;
   confidence: number;
+  kbSource?: string;
+  prerequisites?: string[];
+  evidenceBasis?: string[];
 }
 
 // Triage Engine Structured State Interfaces
