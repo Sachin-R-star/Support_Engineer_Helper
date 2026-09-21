@@ -448,9 +448,13 @@ export class TriageService {
     // 3. Branch handling by ActionResultStatus & User Notes symptom evaluation
     let matchedNewIssue: KbIssueDefinition | null = null;
     if (payload.userNotes && payload.userNotes.trim().length > 3) {
-      const newSymptomMatches = TaxonomyService.matchCandidatesFromQuery(payload.userNotes.trim());
-      if (newSymptomMatches.length > 0 && newSymptomMatches[0].confidence >= 40) {
-        matchedNewIssue = newSymptomMatches[0].issueType;
+      // Evaluate new symptom in COMBINED context of original incident + previous actions + new symptom
+      const combinedContext = `${incident.description} ${payload.actionDescription} ${payload.userNotes.trim()}`;
+      const newSymptomMatches = TaxonomyService.matchCandidatesFromQuery(combinedContext);
+      // Require high confidence (>= 70%) for a new symptom to re-classify domain
+      const topMatch = newSymptomMatches.find(m => m.issueType.id !== issueType.id && m.confidence >= 70);
+      if (topMatch) {
+        matchedNewIssue = topMatch.issueType;
       }
     }
 
@@ -498,6 +502,7 @@ export class TriageService {
         };
       }
     } else if (payload.resultStatus === 'NO_FAILED' || payload.resultStatus === 'PARTIALLY_RESOLVED' || payload.resultStatus === 'SOMETHING_CHANGED') {
+      // MANDATORY LIFECYCLE RULE: Incident remains IN_PROGRESS when action fails or is partially resolved
       updatedStatus = 'IN_PROGRESS';
       this.repo.updateStatus(incident.id, 'IN_PROGRESS');
 
@@ -553,24 +558,18 @@ export class TriageService {
       const failedCount = attemptedHistory.filter(a => a.resultStatus === 'NO_FAILED' || a.resultStatus === 'PARTIALLY_RESOLVED' || a.resultStatus === 'SOMETHING_CHANGED').length;
       updatedConfidence = Math.max(30, Math.min(95, incident.confidenceScore - (failedCount * 10)));
 
-      if (matchedNewIssue && matchedNewIssue.troubleshooting_steps.length > 0) {
-        // If a new symptom was matched to a specific issue type, prioritize troubleshooting steps for the new symptom!
-        nextRecAction = matchedNewIssue.troubleshooting_steps[0];
-        nextFallbackAction = matchedNewIssue.troubleshooting_steps[1] || matchedNewIssue.troubleshooting_steps[0];
-      } else {
-        // Generate recommendation excluding all attempted actions
-        const newRec = RecommendationService.generateStructuredRecommendation({
-          category: incident.category,
-          selectedIssue: issueType,
-          answers: {},
-          evidence: this.repo.getEvidenceForIncident(incident.id),
-          previousActions: previousActionDescriptions,
-          confidence: updatedConfidence
-        });
+      // Generate recommendation excluding all attempted actions, preserving parent issue grounding
+      const newRec = RecommendationService.generateStructuredRecommendation({
+        category: incident.category,
+        selectedIssue: issueType,
+        answers: {},
+        evidence: this.repo.getEvidenceForIncident(incident.id),
+        previousActions: previousActionDescriptions,
+        confidence: updatedConfidence
+      });
 
-        nextRecAction = newRec.action;
-        nextFallbackAction = newRec.fallback_action;
-      }
+      nextRecAction = newRec.action;
+      nextFallbackAction = newRec.fallback_action;
 
       // Update incident record with new next step & confidence
       DatabaseService.getDb().prepare(`

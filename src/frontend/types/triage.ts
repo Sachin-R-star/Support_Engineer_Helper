@@ -34,6 +34,7 @@ export interface TaxonomyQuestion {
   question_text: string;
   answer_type?: 'YES_NO' | 'SINGLE_CHOICE' | 'MULTI_CHOICE' | 'TEXT';
   options: TaxonomyQuestionOption[];
+  explanation?: string;
 }
 
 export type EscalationTier = 'NONE' | 'TIER_1' | 'TIER_2' | 'TIER_3' | 'INFOSEC_SIRT' | 'ON_SITE_BAR' | 'VENDOR';
@@ -428,6 +429,12 @@ export interface HybridDecisionTrace {
     ruleOverrides: string[];
     finalDecision: string;
   };
+}
+
+export function formatConfidence(score?: number): number {
+  if (score === undefined || score === null || isNaN(score)) return 0;
+  let val = (score > 0 && score <= 1) ? score * 100 : score;
+  return Math.min(100, Math.max(0, Math.round(val)));
 }
 
 

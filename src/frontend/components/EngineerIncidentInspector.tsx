@@ -4,7 +4,8 @@ import {
   IncidentDetailResponse,
   IncidentActionRecord,
   IncidentAnswerRecord,
-  IncidentRelationshipRecord
+  IncidentRelationshipRecord,
+  formatConfidence
 } from '../types/triage';
 import { ApiClient } from '../services/apiClient';
 
@@ -214,7 +215,7 @@ export const EngineerIncidentInspector: React.FC<EngineerIncidentInspectorProps>
                   </span>
                 </div>
                 <div className="pri-score font-mono">
-                  Confidence Score: {Math.round((incident.confidenceScore || 0) * 100)}%
+                  Confidence Score: {formatConfidence(incident.confidenceScore)}%
                 </div>
               </div>
             </div>

@@ -78,50 +78,38 @@ export class RecommendationService {
       };
     }
 
-    // 4. Primary Knowledge-Base Step Mapping based on Answers & Evidence
+    // 4. Primary Knowledge-Base Step Mapping based on Selected Issue & Previous Attempts
     let primaryStep = kbSteps[0] || 'Escalate request to IT Service Desk.';
-    let expectedOutcome = 'Restores standard functionality and resolves symptom.';
+    let expectedOutcome = `Restores standard functionality for ${selectedIssue.display_name}.`;
     let fallbackStep = kbSteps[1] || 'Escalate to Tier 2 IT Support.';
     let escalationTier: EscalationTier = 'NONE';
     let escalationReason = 'Standard resolution path within Tier 1 / Self-Service capabilities.';
 
-    if (answerValues.includes('locked_out')) {
-      primaryStep = kbSteps[0] || 'Direct user to Enterprise Self-Service Password Portal (id.enterprise.com/reset).';
-      expectedOutcome = 'Active Directory / SSO account unlocks and user authenticates successfully.';
-      fallbackStep = 'Initiate manual account unlock via Tier 1 IT Helpdesk agent console.';
-      escalationTier = 'TIER_1';
-      escalationReason = 'Self-service portal unblocks user; Tier 1 escalation only if SMS 2FA token fails.';
-    } else if (answerValues.includes('public_ok')) {
-      primaryStep = kbSteps[1] || kbSteps[0] || 'Flush local DNS cache and reconnect to fallback VPN gateway.';
-      expectedOutcome = 'Establishes stable IPSec tunnel via secondary regional VPN node.';
-      fallbackStep = kbSteps[2] || 'Reinstall GlobalProtect VPN network virtual adapter driver.';
-      escalationTier = 'TIER_2';
-      escalationReason = 'Network gateway routing failure requiring Tier 2 Network team investigation.';
-    } else if (answerValues.includes('no_power') || answerValues.includes('boot_crash')) {
-      primaryStep = kbSteps[0] || 'Perform SMC/EC power reset by holding power button for 30 seconds.';
-      expectedOutcome = 'System completes POST boot cycle into operating system.',
-      fallbackStep = 'Schedule workstation hardware diagnostic appointment at IT Bar.';
-      escalationTier = 'ON_SITE_BAR';
-      escalationReason = 'Hardware kernel boot fault requiring physical hardware repair.';
-    }
-
-    // Filter out previously executed actions to avoid repeating ineffective steps!
+    // Filter out previously executed actions to ensure next unattempted KB step is recommended
     if (previousActions && previousActions.length > 0) {
       const remainingSteps = kbSteps.filter(step => !previousActions.includes(step));
       if (remainingSteps.length > 0) {
         primaryStep = remainingSteps[0];
         fallbackStep = remainingSteps[1] || 'Escalate to Tier 2 IT Support.';
       } else if (kbSteps.length > 0) {
-        primaryStep = 'All standard troubleshooting steps previously attempted. Escalate ticket to Tier 2 engineering team.';
+        primaryStep = `All standard troubleshooting steps for ${selectedIssue.display_name} previously attempted. Escalate ticket to Tier 2 engineering team.`;
         fallbackStep = 'Schedule physical hardware/workstation diagnostic at IT Support Bar.';
         escalationTier = 'TIER_2';
         escalationReason = 'All automated KB steps exhausted without resolution.';
       }
+    } else {
+      // Pick top unattempted step matching evidence within the selected issue KB definition
+      if (answerValues.includes('public_ok') && selectedIssue.category === 'NETWORK' && kbSteps.length > 1) {
+        primaryStep = kbSteps[1] || kbSteps[0];
+      } else if (answerValues.includes('locked_out') && selectedIssue.category === 'ACCOUNT') {
+        primaryStep = kbSteps[0];
+        escalationTier = 'TIER_1';
+      }
     }
 
-    const rationale = `Matched KB troubleshooting step for ${selectedIssue.display_name} (${selectedIssue.category}/${selectedIssue.subdomain}) based on diagnostic evidence.`;
+    const rationale = `Matched grounded KB troubleshooting step for ${selectedIssue.display_name} (${selectedIssue.category}/${selectedIssue.subdomain}) based on diagnostic evidence.`;
 
-    // AI Reliability Grounding Enforcement
+    // Strict Grounding Validation: Ensure recommended action is present in KB steps
     const groundingCheck = AiReliabilityService.groundTroubleshootingAction(
       primaryStep,
       kbSteps,

@@ -23,12 +23,22 @@ export const AdaptiveStepPanel: React.FC<AdaptiveStepPanelProps> = ({ adaptiveSt
   const confidenceLabel = bandTextMap[adaptiveStep.confidenceBand] || 'High';
   const confidenceClass = bandColors[adaptiveStep.confidenceBand] || bandColors.HIGH;
 
-  // Format clean human rationale for default employee view
-  let humanRationale = "This question helps us determine whether your login problem is related to your account or your network connection.";
-  const rawRationale = adaptiveStep.rationale || "";
-  
-  if (rawRationale && !/distinguish|hypothesis|score|effort|risk|gain|algorithm|KB|timeout|lockout/i.test(rawRationale)) {
-    humanRationale = rawRationale;
+  // Format clean human rationale derived directly from question metadata or adaptive rationale
+  let humanRationale = adaptiveStep.question?.explanation || '';
+  if (!humanRationale && adaptiveStep.rationale) {
+    // Clean technical jargon if present
+    let cleaned = adaptiveStep.rationale
+      .replace(/Question ".*?" selected to distinguish between/i, 'This question helps distinguish between')
+      .replace(/with low user effort and zero safety risk\./i, '.')
+      .replace(/selected from Knowledge Base branching logic\./i, '.')
+      .trim();
+    if (cleaned) {
+      humanRationale = cleaned;
+    }
+  }
+
+  if (!humanRationale) {
+    humanRationale = `This question helps us evaluate specific diagnostic symptoms for ${adaptiveStep.title || 'your reported issue'}.`;
   }
 
   return (

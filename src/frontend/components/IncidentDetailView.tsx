@@ -6,7 +6,8 @@ import {
   IncidentAnswerRecord,
   IncidentRelationshipRecord,
   IncidentGraphPayload,
-  IncidentDetailResponse
+  IncidentDetailResponse,
+  formatConfidence
 } from '../types/triage';
 import { ApiClient } from '../services/apiClient';
 import { IncidentGraphView } from './IncidentGraphView';
@@ -353,10 +354,10 @@ export const IncidentDetailView: React.FC<IncidentDetailViewProps> = ({
                     <div className="meter-bar">
                       <div
                         className="fill"
-                        style={{ width: `${(incident.confidenceScore || 0) * 100}%` }}
+                        style={{ width: `${formatConfidence(incident.confidenceScore)}%` }}
                       />
                     </div>
-                    <span className="font-mono">{Math.round((incident.confidenceScore || 0) * 100)}%</span>
+                    <span className="font-mono">{formatConfidence(incident.confidenceScore)}%</span>
                   </div>
                 </div>
               </div>

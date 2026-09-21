@@ -17,6 +17,7 @@
       {
         "id": "q_net_scope",
         "question_text": "Can you access public websites (e.g., google.com) without the VPN active?",
+        "explanation": "This question determines whether your connection issue is isolated to the corporate VPN gateway or a local internet outage.",
         "options": [
           {"label": "Yes, public internet works fine", "value": "public_ok"},
           {"label": "No, local Wi-Fi / internet is completely down", "value": "local_network_down", "priority_signal": "LOCAL_OUTAGE"}
@@ -25,6 +26,7 @@
       {
         "id": "q_net_gateway",
         "question_text": "Which regional VPN gateway are you trying to connect to?",
+        "explanation": "This question identifies which regional VPN gateway node is experiencing connection timeouts.",
         "options": [
           {"label": "US-East (Primary Gateway)", "value": "us_east"},
           {"label": "US-West Gateway", "value": "us_west"},
@@ -66,6 +68,7 @@
       {
         "id": "q_wifi_ssid",
         "question_text": "Which Wi-Fi network are you attempting to connect to?",
+        "explanation": "This question verifies which Wi-Fi network and 802.1X certificate authentication profile you are attempting to use.",
         "options": [
           {"label": "Enterprise-Secure (802.1X Certificate)", "value": "corp_secure"},
           {"label": "Enterprise-Guest (Web Portal)", "value": "corp_guest"},
@@ -105,6 +108,7 @@
       {
         "id": "q_auth_scope",
         "question_text": "Is the login failure locking your primary corporate SSO or a single third-party tool?",
+        "explanation": "This question clarifies whether your account lockout affects primary domain single-sign-on or an individual application.",
         "options": [
           {"label": "Primary Corporate SSO / Email Account", "value": "sso_domain"},
           {"label": "Single Specific Application (Slack, Jira)", "value": "single_app"}
@@ -113,6 +117,7 @@
       {
         "id": "q_auth_error",
         "question_text": "What message appears on your login screen?",
+        "explanation": "This question checks the specific identity provider error message to distinguish between locked accounts, expired passwords, and invalid credentials.",
         "options": [
           {"label": "Account locked due to multiple failed attempts", "value": "locked_out"},
           {"label": "Incorrect password or username", "value": "invalid_password"},
@@ -309,6 +314,7 @@
       {
         "id": "q_freeze_symptom",
         "question_text": "Is the entire laptop frozen, or can you still move the mouse/cursor?",
+        "explanation": "This question determines whether the system freeze is affecting the entire laptop kernel or only specific desktop UI applications.",
         "options": [
           {"label": "Entire laptop is completely frozen (mouse and keyboard unresponsive)", "value": "full_system_freeze"},
           {"label": "Screen/app is frozen, but mouse cursor still moves", "value": "partial_cursor_moves"},
@@ -318,6 +324,7 @@
       {
         "id": "q_hw_power",
         "question_text": "When does the freeze or crash occur?",
+        "explanation": "This question isolates whether workstation system crashes occur during startup, heavy CPU load, or when docked to external peripherals.",
         "options": [
           {"label": "During OS boot process", "value": "boot_crash", "priority_signal": "SYSTEM_UNBOOTABLE"},
           {"label": "Randomly during heavy workload / video call", "value": "load_crash"},
@@ -327,6 +334,7 @@
       {
         "id": "q_hw_stop_code",
         "question_text": "Was a specific Windows Stop Code displayed on the blue screen?",
+        "explanation": "This question checks the Windows Stop Code error to pinpoint kernel driver bugs vs hardware memory faults.",
         "prerequisite_question_id": "q_freeze_symptom",
         "prerequisite_answer_value": "bsod_reboot",
         "options": [

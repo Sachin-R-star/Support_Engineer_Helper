@@ -105,7 +105,9 @@ export class HybridDecisionEngine {
     const user = this.repo.getUserById(userId);
     const prioritySignals: string[] = [];
     if (user?.isVip) prioritySignals.push('EXECUTIVE_VIP');
-    if (/password|lockout|mfa|sso/i.test(sanitizedQuery)) prioritySignals.push('SECURITY_LOCKOUT');
+    if (/(?:account|sso|login)\s+(?:is\s+)?locked|password\s+reset|forgot\s+(?:my\s+)?password|too\s+many\s+failed\s+attempts|lockout/i.test(sanitizedQuery)) {
+      prioritySignals.push('SECURITY_LOCKOUT');
+    }
     if (/call in \d+|meeting|urgent|client/i.test(sanitizedQuery)) prioritySignals.push('URGENT_TIMEFRAME');
 
     const boundedContext: BoundedRetrievalContext = {
@@ -153,12 +155,12 @@ export class HybridDecisionEngine {
       finalDecisionCandidateId = topCandidates[0].id;
     }
 
-    // Rule B: Mandatory Security Lockout Category Lock
+    // Rule B: Explicit Security Lockout Category Check
     if (prioritySignals.includes('SECURITY_LOCKOUT')) {
       deterministicRulesApplied.push(`Security Lockout rule evaluated: category locked to ACCOUNT.`);
       if (!finalDecisionCandidateId.startsWith('kb_acc_')) {
-        const accCandidate = topCandidates.find(c => c.category === 'ACCOUNT') || { id: 'kb_acc_lockout_01' };
-        finalDecisionCandidateId = accCandidate.id;
+        const topAccCandidate = topCandidates.find(c => c.category === 'ACCOUNT') || { id: 'kb_acc_lockout_01', confidence: 50 };
+        finalDecisionCandidateId = topAccCandidate.id;
       }
     }
 
@@ -247,7 +249,9 @@ export class HybridDecisionEngine {
     const user = this.repo.getUserById(userId);
     const prioritySignals: string[] = [];
     if (user?.isVip) prioritySignals.push('EXECUTIVE_VIP');
-    if (/password|lockout|mfa|sso/i.test(sanitizedQuery)) prioritySignals.push('SECURITY_LOCKOUT');
+    if (/(?:account|sso|login)\s+(?:is\s+)?locked|password\s+reset|forgot\s+(?:my\s+)?password|too\s+many\s+failed\s+attempts|lockout/i.test(sanitizedQuery)) {
+      prioritySignals.push('SECURITY_LOCKOUT');
+    }
     if (/call in \d+|meeting|urgent|client/i.test(sanitizedQuery)) prioritySignals.push('URGENT_TIMEFRAME');
 
     const boundedContext: BoundedRetrievalContext = {
@@ -299,8 +303,8 @@ export class HybridDecisionEngine {
     if (prioritySignals.includes('SECURITY_LOCKOUT')) {
       deterministicRulesApplied.push(`Security Lockout rule evaluated: category locked to ACCOUNT.`);
       if (!finalDecisionCandidateId.startsWith('kb_acc_')) {
-        const accCandidate = topCandidates.find(c => c.category === 'ACCOUNT') || { id: 'kb_acc_lockout_01' };
-        finalDecisionCandidateId = accCandidate.id;
+        const topAccCandidate = topCandidates.find(c => c.category === 'ACCOUNT') || { id: 'kb_acc_lockout_01', confidence: 50 };
+        finalDecisionCandidateId = topAccCandidate.id;
       }
     }
 

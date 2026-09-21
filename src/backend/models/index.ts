@@ -159,6 +159,7 @@ export type QuestionAnswerType = 'YES_NO' | 'SINGLE_CHOICE' | 'MULTI_CHOICE' | '
 export interface KbDiagnosticQuestion {
   id: string;
   question_text: string;
+  explanation?: string;
   answer_type?: QuestionAnswerType;
   prerequisite_question_id?: string;
   prerequisite_answer_value?: string;

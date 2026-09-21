@@ -113,16 +113,20 @@ export class QuestionEngine {
    * are explicitly mentioned in the user query or confirmed in prior answers.
    */
   public static isQuestionGrounded(q: KbDiagnosticQuestion, state: StructuredTriageState): boolean {
-    const assumed = q.assumed_components;
-    if (!assumed || assumed.length === 0) {
-      return true;
-    }
-
     const queryLower = (state.originalInput || '').toLowerCase();
     const answerValues = Object.values(state.answers).map(a => (a.answerValue || '').toLowerCase());
     const answerTexts = Object.values(state.answers).map(a => `${a.questionText || ''} ${a.isUnsure ? '' : a.answerValue || ''}`.toLowerCase());
 
-    for (const comp of assumed) {
+    const components = new Set<string>(q.assumed_components || []);
+    const qTextLower = (q.question_text || '').toLowerCase();
+
+    if (/docking station|thunderbolt dock/i.test(qTextLower)) components.add('docking_station');
+    if (/printer|print spooler/i.test(qTextLower)) components.add('printer');
+    if (/external monitor|second display|second screen/i.test(qTextLower)) components.add('external_monitor');
+    if (/\bvpn\b|globalprotect|anyconnect/i.test(qTextLower)) components.add('vpn');
+    if (/wi-fi|wifi/i.test(qTextLower)) components.add('wifi');
+
+    for (const comp of components) {
       if (!this.isComponentGroundedInContext(comp, queryLower, answerValues, answerTexts)) {
         return false;
       }
