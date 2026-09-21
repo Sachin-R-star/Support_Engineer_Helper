@@ -57,12 +57,9 @@ export class TaxonomyService {
 
   public static getFallbackIssueType(): KbIssueDefinition {
     const kb = this.getTaxonomy();
-    return (
-      this.findIssueTypeById('kb_oth_general_99') ||
-      this.findIssueTypeById('other_general_it') ||
-      kb[kb.length - 1] ||
-      kb[0]
-    );
+    const general = kb.find(t => t.id === 'kb_oth_general_99' || t.issue_type === 'other_general_it');
+    if (general) return general;
+    return kb[kb.length - 1];
   }
 
   /**

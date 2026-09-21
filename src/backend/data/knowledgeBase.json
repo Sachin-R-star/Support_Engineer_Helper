@@ -299,7 +299,7 @@
     "issue_type": "hardware_bsod_kernel_panic",
     "display_name": "Hardware Blue Screen (BSOD) / System Freeze",
     "description": "Workstation experiencing fatal system crash, screen hanging, system freeze, blue screen stop codes (BSOD), or unexpected kernel panics during operation.",
-    "keywords": ["blue screen", "bsod", "kernel panic", "crash", "reboot", "stop code", "hardware", "memory", "dump file", "hang", "hanging", "freeze", "freezing", "frozen", "unresponsive", "screen freeze", "laptop frozen", "stuck"],
+    "keywords": ["blue screen", "bsod", "kernel panic", "crash", "reboot", "stop code", "hardware", "memory", "dump file", "hang", "hanging", "freeze", "freezing", "frozen", "unresponsive", "screen freeze", "laptop frozen", "stuck", "laptop slow", "system slow", "laptop freeze"],
     "example_user_phrases": [
       "Computer keeps crashing to a blue screen",
       "Windows stop code CRITICAL_PROCESS_DIED",
@@ -307,7 +307,8 @@
       "My laptop screen is hanging",
       "My laptop is completely frozen",
       "My screen is frozen but mouse still moves",
-      "Laptop freezes when connected to docking station"
+      "Laptop freezes when connected to docking station",
+      "My laptop has become extremely slow and screen freezes"
     ],
     "required_information": ["Stop Code string", "Freeze behavior (full system vs cursor)", "Dump file crash trace"],
     "diagnostic_questions": [
@@ -481,11 +482,13 @@
     "issue_type": "phishing_security_alert",
     "display_name": "Suspected Phishing / Security Incident",
     "description": "User received suspicious email, clicked untrusted URL, executed unapproved file attachment, or suspects credential compromise.",
-    "keywords": ["phishing", "virus", "malware", "hack", "ransomware", "suspicious link", "clicked link", "compromised", "security", "unauthorized"],
+    "keywords": ["phishing", "virus", "malware", "hack", "ransomware", "suspicious link", "clicked link", "compromised", "security", "unauthorized", "suspicious website", "verify account", "entered password"],
     "example_user_phrases": [
       "I clicked a link in a suspicious email",
       "I entered my password on a fake website",
-      "Antivirus popup warning about malware"
+      "Antivirus popup warning about malware",
+      "I received an email asking me to verify my account",
+      "I clicked the link and entered my company username and password"
     ],
     "required_information": ["Email Sender Header", "Target URL clicked", "Device isolation state"],
     "diagnostic_questions": [

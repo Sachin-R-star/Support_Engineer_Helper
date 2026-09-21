@@ -51,7 +51,7 @@ export class TriageService {
     let selectedIssue: KbIssueDefinition | null = null;
     let step: StructuredTriageState['currentStep'] = 'AMBIGUITY_SELECTION';
 
-    if (candidateMatches.length === 1 || candidateMatches[0].confidence >= 80) {
+    if (candidateMatches.length > 0 && candidateMatches[0].issueType.id !== 'kb_oth_general_99' && candidateMatches[0].confidence >= 30) {
       selectedIssue = candidateMatches[0].issueType;
       step = 'PROGRESSIVE_QUESTION';
     }
@@ -412,12 +412,6 @@ export class TriageService {
       if (session?.finalTriageResult?.incidentId) {
         incident = this.repo.getIncidentById(session.finalTriageResult.incidentId);
       }
-      if (!incident) {
-        const allIncidents = this.repo.getAllIncidents();
-        if (allIncidents.length > 0) {
-          incident = allIncidents[0];
-        }
-      }
     }
     if (!incident) throw new Error(`Incident ${payload.incidentId} not found`);
 
@@ -509,46 +503,50 @@ export class TriageService {
       updatedStatus = 'IN_PROGRESS';
       this.repo.updateStatus(incident.id, 'IN_PROGRESS');
 
-      // Create & link a follow-up incident representing the new symptom/issue if notes provided or SOMETHING_CHANGED
-      const followUpSummary = payload.userNotes 
-        ? `New symptom after ${payload.actionDescription}: ${payload.userNotes}`
-        : `New/changed symptom reported following action '${payload.actionDescription}' on ${incident.ticketNumber}`;
+      // Create & link a follow-up incident ONLY if explicitly SOMETHING_CHANGED or if userNotes contains a distinct new symptom match
+      const shouldCreateFollowUp = payload.resultStatus === 'SOMETHING_CHANGED' || (matchedNewIssue && payload.userNotes && payload.userNotes.trim().length > 3);
 
-      const followUpId = `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-      const followUpTicketNum = `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      const targetIssue = matchedNewIssue || TaxonomyService.getFallbackIssueType();
+      if (shouldCreateFollowUp) {
+        const followUpSummary = payload.userNotes 
+          ? `New symptom after ${payload.actionDescription}: ${payload.userNotes}`
+          : `New/changed symptom reported following action '${payload.actionDescription}' on ${incident.ticketNumber}`;
 
-      const createdFollowUp = this.memoryService.createIncident({
-        id: followUpId,
-        ticketNumber: followUpTicketNum,
-        userId: incident.userId,
-        deviceId: incident.deviceId,
-        category: targetIssue.category,
-        issueType: targetIssue.issue_type,
-        priority: incident.priority,
-        status: 'OPEN',
-        summary: followUpSummary,
-        description: `Follow-up issue triggered after executing action '${payload.actionDescription}' on ticket ${incident.ticketNumber}. User feedback: ${payload.userNotes || payload.resultStatus}`,
-        missingInfo: targetIssue.required_information || [],
-        recommendedNextStep: targetIssue.troubleshooting_steps[0] || 'Assess new symptom and verify system configuration.',
-        reasoning: `Follow-up ticket linked to ${incident.ticketNumber} after troubleshooting action execution. Matched domain: ${targetIssue.display_name}.`,
-        confidenceScore: Math.max(30, incident.confidenceScore - 10)
-      });
+        const followUpId = `inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const followUpTicketNum = `INC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const targetIssue = matchedNewIssue || TaxonomyService.getFallbackIssueType();
 
-      // Link follow-up incident with POSSIBLY_CAUSED_BY relationship
-      this.memoryService.linkIncidents(
-        createdFollowUp.id,
-        incident.id,
-        'POSSIBLY_CAUSED_BY',
-        0.80
-      );
+        const createdFollowUp = this.memoryService.createIncident({
+          id: followUpId,
+          ticketNumber: followUpTicketNum,
+          userId: incident.userId,
+          deviceId: incident.deviceId,
+          category: targetIssue.category,
+          issueType: targetIssue.issue_type,
+          priority: incident.priority,
+          status: 'OPEN',
+          summary: followUpSummary,
+          description: `Follow-up issue triggered after executing action '${payload.actionDescription}' on ticket ${incident.ticketNumber}. User feedback: ${payload.userNotes || payload.resultStatus}`,
+          missingInfo: targetIssue.required_information || [],
+          recommendedNextStep: targetIssue.troubleshooting_steps[0] || 'Assess new symptom and verify system configuration.',
+          reasoning: `Follow-up ticket linked to ${incident.ticketNumber} after troubleshooting action execution. Matched domain: ${targetIssue.display_name}.`,
+          confidenceScore: Math.max(30, incident.confidenceScore - 10)
+        });
 
-      followUpIncident = {
-        id: createdFollowUp.id,
-        ticketNumber: createdFollowUp.ticketNumber,
-        summary: createdFollowUp.summary,
-        relationshipType: 'POSSIBLY_CAUSED_BY'
-      };
+        // Link follow-up incident with POSSIBLY_CAUSED_BY relationship
+        this.memoryService.linkIncidents(
+          createdFollowUp.id,
+          incident.id,
+          'POSSIBLY_CAUSED_BY',
+          0.80
+        );
+
+        followUpIncident = {
+          id: createdFollowUp.id,
+          ticketNumber: createdFollowUp.ticketNumber,
+          summary: createdFollowUp.summary,
+          relationshipType: 'POSSIBLY_CAUSED_BY'
+        };
+      }
     }
 
     // 4. Calculate updated confidence and next recommended action if not resolved

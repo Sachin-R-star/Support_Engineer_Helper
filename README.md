@@ -8,7 +8,7 @@ The system combines **deterministic Knowledge Base taxonomy rules**, **explainab
 
 ## 🚀 Live Demo & Deployment Links
 
-- **Frontend App (Netlify)**: [https://support-engineer-helper.netlify.app](https://support-engineer-helper.netlify.app)
+- **Frontend App (Vercel)**: [https://support-engineer-helper.vercel.app/](https://support-engineer-helper.vercel.app/)
 - **Backend API (Render)**: [https://support-engineer-helper.onrender.com](https://support-engineer-helper.onrender.com)
 
 ---
@@ -115,7 +115,7 @@ npm run build
 # Start Backend Server:
 npm run dev
 ```
-Open `http://localhost:3000` (or live at [https://support-engineer-helper.netlify.app](https://support-engineer-helper.netlify.app)) in your web browser.
+Open `http://localhost:3000` (or live at [https://support-engineer-helper.vercel.app/](https://support-engineer-helper.vercel.app/)) in your web browser.
 
 ### Run Automated Tests
 ```bash
@@ -130,7 +130,7 @@ npx tsc --noEmit
 
 ## 5. Guided Demo Sequence
 
-1. **Dashboard Overview**: Open `http://localhost:3000` or [https://support-engineer-helper.netlify.app](https://support-engineer-helper.netlify.app). Observe real-time queue metrics and pattern alerts.
+1. **Dashboard Overview**: Open `http://localhost:3000` or [https://support-engineer-helper.vercel.app/](https://support-engineer-helper.vercel.app/). Observe real-time queue metrics and pattern alerts.
 2. **New Triage Session**: Enter `"Wi-Fi is connected but I cannot access websites. Teams is also not working and I have an important client call in 30 minutes."`
 3. **Progressive Question & Adaptive UI**: Answer the high-discrimination question. View the "Why this next step?" card.
 4. **Diagnosis & Priority**: View `P1_CRITICAL` priority, confidence rating, missing information, and grounded recommendation.

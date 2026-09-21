@@ -3,31 +3,41 @@ import { TriageSession, IncidentRecord, TimelineEvent, IncidentGraphPayload, Inc
 const API_BASE = '/api';
 
 export class ApiClient {
-  public static async fetchDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_BASE}/incidents/dashboard/stats`);
+  private static async requestJson(url: string, init?: RequestInit): Promise<any> {
+    const res = await fetch(url, init);
+    const contentType = res.headers.get('content-type') || '';
+
+    if (!contentType.includes('application/json')) {
+      const text = await res.text();
+      throw new Error(`API server returned non-JSON response (HTTP ${res.status}): ${text.substring(0, 150)}`);
+    }
+
     const data = await res.json();
+    return data;
+  }
+
+  public static async fetchDashboardStats(): Promise<DashboardStats> {
+    const data = await this.requestJson(`${API_BASE}/incidents/dashboard/stats`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch dashboard stats');
     return data.stats;
   }
 
   public static async startTriage(userId: string, query: string, deviceId?: string): Promise<TriageSession> {
-    const res = await fetch(`${API_BASE}/triage/start`, {
+    const data = await this.requestJson(`${API_BASE}/triage/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, query, deviceId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to start triage');
     return data.session;
   }
 
   public static async selectCandidate(sessionId: string, issueTypeId: string): Promise<TriageSession> {
-    const res = await fetch(`${API_BASE}/triage/select-issue`, {
+    const data = await this.requestJson(`${API_BASE}/triage/select-issue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId, issueTypeId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to select issue');
     return data.session;
   }
@@ -38,114 +48,102 @@ export class ApiClient {
     answerValue: string,
     isUnsure = false
   ): Promise<TriageSession> {
-    const res = await fetch(`${API_BASE}/triage/answer`, {
+    const data = await this.requestJson(`${API_BASE}/triage/answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId, questionId, answerValue, isUnsure })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to process answer');
     return data.session;
   }
 
   public static async goBack(sessionId: string): Promise<TriageSession> {
-    const res = await fetch(`${API_BASE}/triage/back`, {
+    const data = await this.requestJson(`${API_BASE}/triage/back`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to navigate back');
     return data.session;
   }
 
   public static async searchIssues(query: string): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/search`, {
+    const data = await this.requestJson(`${API_BASE}/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Search failed');
     return data.candidates;
   }
 
   public static async fetchIncidents(userId?: string): Promise<IncidentRecord[]> {
     const url = userId ? `${API_BASE}/incidents?userId=${encodeURIComponent(userId)}` : `${API_BASE}/incidents`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await this.requestJson(url);
     if (!data.success) throw new Error(data.error || 'Failed to fetch incidents');
     return data.incidents;
   }
 
   public static async fetchIncidentDetails(id: string): Promise<IncidentDetailResponse> {
-    const res = await fetch(`${API_BASE}/incidents/${id}`);
-    const data = await res.json();
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch incident details');
     return data;
   }
 
   public static async fetchIncidentTimeline(id: string): Promise<TimelineEvent[]> {
-    const res = await fetch(`${API_BASE}/incidents/${id}/timeline`);
-    const data = await res.json();
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}/timeline`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch incident timeline');
     return data.timeline;
   }
 
   public static async fetchIncidentGraph(id: string): Promise<IncidentGraphPayload> {
-    const res = await fetch(`${API_BASE}/incidents/${id}/graph`);
-    const data = await res.json();
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}/graph`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch incident graph');
     return data.graph;
   }
 
   public static async fetchIncidentChain(id: string): Promise<IncidentRecord[]> {
-    const res = await fetch(`${API_BASE}/incidents/${id}/chain`);
-    const data = await res.json();
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}/chain`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch incident chain');
     return data.chain;
   }
 
   public static async reopenIncident(id: string, reason: string): Promise<IncidentRecord> {
-    const res = await fetch(`${API_BASE}/incidents/${id}/reopen`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}/reopen`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to reopen incident');
     return data.incident;
   }
 
   public static async resolveIncident(id: string, resolution: string): Promise<IncidentRecord> {
-    const res = await fetch(`${API_BASE}/incidents/${id}/resolve`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${id}/resolve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resolution })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to resolve incident');
     return data.incident;
   }
 
   public static async confirmRelationship(relId: string, actorId = 'USER'): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/relationships/${relId}/confirm`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/relationships/${relId}/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ actorId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to confirm relationship');
     return data.relationship;
   }
 
   public static async rejectRelationship(relId: string, actorId = 'USER'): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/relationships/${relId}/reject`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/relationships/${relId}/reject`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ actorId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to reject relationship');
     return data.relationship;
   }
@@ -157,7 +155,7 @@ export class ApiClient {
     explanation = '', 
     similarityScore = 0.85
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${sourceIncidentId}/link`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${sourceIncidentId}/link`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -168,7 +166,6 @@ export class ApiClient {
         status: 'CONFIRMED'
       })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to link incidents');
     return data.relationship;
   }
@@ -179,12 +176,11 @@ export class ApiClient {
     description: string, 
     performer = 'USER'
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/actions`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ actionType, description, performer })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to append action');
     return data.action;
   }
@@ -195,12 +191,11 @@ export class ApiClient {
     resultStatus: 'SUCCESS' | 'FAILURE' | 'PARTIAL', 
     resultDetails: string
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/actions/${actionId}/result`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/actions/${actionId}/result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resultStatus, resultDetails })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to record action result');
     return data.action;
   }
@@ -212,19 +207,17 @@ export class ApiClient {
     userNotes?: string,
     actionId?: string
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/verify-action`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/verify-action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ actionId, actionDescription, resultStatus, userNotes })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to verify action result');
     return data;
   }
 
   public static async fetchRca(incidentId: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/rca`);
-    const data = await res.json();
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/rca`);
     if (!data.success) throw new Error(data.error || 'Failed to fetch RCA');
     return data.rca;
   }
@@ -237,12 +230,11 @@ export class ApiClient {
     overrideReason?: string,
     actorId = 'USER'
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/rca/decide`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/rca/decide`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ candidateId, decision, notes, overrideReason, actorId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to record RCA decision');
     return data.rca;
   }
@@ -254,14 +246,12 @@ export class ApiClient {
     notes?: string,
     actorId = 'USER'
   ): Promise<any> {
-    const res = await fetch(`${API_BASE}/incidents/${incidentId}/rca/verify-hypothesis`, {
+    const data = await this.requestJson(`${API_BASE}/incidents/${incidentId}/rca/verify-hypothesis`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ candidateId, result, notes, actorId })
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to record hypothesis verification');
     return data.rca;
   }
 }
-

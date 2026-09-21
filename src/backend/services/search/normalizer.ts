@@ -89,4 +89,45 @@ export class TextNormalizer {
       expandedTokens: Array.from(expandedSet)
     };
   }
+
+  /**
+   * Identifies canonical concept group key for a token/term if present in synonym map.
+   */
+  public static getConceptGroupForTerm(term: string): string {
+    const norm = this.normalize(term);
+    for (const [canonical, synonyms] of Object.entries(this.synonymMap)) {
+      const allTerms = [canonical, ...synonyms];
+      if (allTerms.some(t => t === norm || (t.length >= 4 && (norm.startsWith(t) || t.startsWith(norm))))) {
+        return canonical;
+      }
+    }
+    return norm;
+  }
+
+  /**
+   * Detects explicitly negated concepts in user query (e.g., "not using a vpn", "no vpn", "without vpn").
+   */
+  public static detectNegatedConcepts(query: string): Set<string> {
+    const norm = this.normalize(query);
+    const negated = new Set<string>();
+
+    const negationPatterns: { pattern: RegExp; concept: string }[] = [
+      { pattern: /not\s+(using|on|connected\s+to|a|with)?\s*vpn/i, concept: 'vpn' },
+      { pattern: /no\s+vpn/i, concept: 'vpn' },
+      { pattern: /without\s+vpn/i, concept: 'vpn' },
+      { pattern: /non-vpn|non\s+vpn/i, concept: 'vpn' },
+      { pattern: /not\s+(a\s+)?(bsod|blue\s+screen|kernel\s+panic)/i, concept: 'blue screen' },
+      { pattern: /no\s+bsod/i, concept: 'blue screen' },
+      { pattern: /not\s+(a\s+)?(password\s+reset|lockout)/i, concept: 'password' }
+    ];
+
+    for (const { pattern, concept } of negationPatterns) {
+      if (pattern.test(norm)) {
+        negated.add(concept);
+      }
+    }
+
+    return negated;
+  }
 }
+

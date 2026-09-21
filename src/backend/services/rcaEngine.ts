@@ -182,31 +182,35 @@ export class RcaEngine {
       });
     }
 
-    // 3. Historical Causal Action Candidate
-    if (memoryContext.hasPrecedingCausalAction && memoryContext.recentExecutedActions.length > 0) {
-      const precedingAct = memoryContext.recentExecutedActions[0];
-      candidates.push({
-        candidate_id: `rca_hist_act_${precedingAct.incidentTicket}`,
-        title: `Preceding Action Influence: ${precedingAct.description}`,
-        description: `Troubleshooting action '${precedingAct.description}' on ${precedingAct.incidentTicket} is a possible contributing factor because this issue occurred shortly after.`,
-        confidence: 70,
-        supporting_evidence: [
-          {
-            id: `ev_hist_act_${precedingAct.incidentTicket}`,
-            statement: `Historical action '${precedingAct.description}' recorded on ticket ${precedingAct.incidentTicket} (${precedingAct.resultStatus})`,
-            source: 'historical_incident_evidence',
-            isHistorical: true,
-            ticketNumber: precedingAct.incidentTicket
-          }
-        ],
-        contradicting_evidence: [],
-        missing_evidence: ['System interface restart confirmation'],
-        verification_question: `Did this symptom begin immediately following '${precedingAct.description}'?`,
-        verification_action: 'Re-bind virtual network adapter and verify routing configuration.',
-        source: 'troubleshooting_action',
-        governance_state: 'AI_HYPOTHESIS',
-        human_decision: 'NONE'
-      });
+    // 3. Historical Causal Action Candidate (Only if explicitly linked via relationship)
+    const linkedParentRel = relationships.find(r => r.relationshipType === 'POSSIBLY_CAUSED_BY' || r.relationshipType === 'FOLLOW_UP_TO');
+    if (linkedParentRel && memoryContext.hasPrecedingCausalAction && memoryContext.recentExecutedActions.length > 0) {
+      const parentTicketId = linkedParentRel.sourceIncidentId === incidentId ? linkedParentRel.targetIncidentId : linkedParentRel.sourceIncidentId;
+      const precedingAct = memoryContext.recentExecutedActions.find(a => a.incidentTicket === parentTicketId) || memoryContext.recentExecutedActions[0];
+      if (precedingAct) {
+        candidates.push({
+          candidate_id: `rca_hist_act_${precedingAct.incidentTicket}`,
+          title: `Preceding Action Influence: ${precedingAct.description}`,
+          description: `Troubleshooting action '${precedingAct.description}' on ${precedingAct.incidentTicket} is a possible contributing factor because this issue occurred shortly after.`,
+          confidence: 70,
+          supporting_evidence: [
+            {
+              id: `ev_hist_act_${precedingAct.incidentTicket}`,
+              statement: `Historical action '${precedingAct.description}' recorded on ticket ${precedingAct.incidentTicket} (${precedingAct.resultStatus})`,
+              source: 'historical_incident_evidence',
+              isHistorical: true,
+              ticketNumber: precedingAct.incidentTicket
+            }
+          ],
+          contradicting_evidence: [],
+          missing_evidence: ['System interface restart confirmation'],
+          verification_question: `Did this symptom begin immediately following '${precedingAct.description}'?`,
+          verification_action: 'Re-bind virtual network adapter and verify routing configuration.',
+          source: 'troubleshooting_action',
+          governance_state: 'AI_HYPOTHESIS',
+          human_decision: 'NONE'
+        });
+      }
     }
 
     // 4. Attach Verification Results & Decision Audit History

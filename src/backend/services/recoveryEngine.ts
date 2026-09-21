@@ -15,7 +15,7 @@ export class RecoveryEngine {
 
   private static EXTREMELY_VAGUE_TERMS = [
     'help', 'it broke', 'problem', 'issue', 'broken', 'not working', 
-    'error', 'fix it', 'something wrong', 'bad', 'fault'
+    'error', 'fix it', 'something wrong', 'bad', 'fault', 'acting weird', 'weird', 'acting slow'
   ];
 
   /**

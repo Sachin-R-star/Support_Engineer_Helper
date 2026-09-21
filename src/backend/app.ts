@@ -27,15 +27,33 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/taxonomy', taxonomyRoutes);
 app.use('/api/search', searchRoutes);
 
+// API 404 Catch-All Handler (Ensures /api routes never fall through to HTML)
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, error: `API endpoint ${req.method} ${req.originalUrl || req.url} not found` });
+});
+
+// Global Express JSON Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(500).json({ success: false, error: err.message || 'Internal Server Error' });
+  }
+  next(err);
+});
+
 // Serve production static frontend if dist folder exists
 const distPath = path.join(__dirname, '../../dist');
 app.use(express.static(distPath));
-app.get('{*splat}', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ success: false, error: `API endpoint ${req.path} not found` });
+  }
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
-    if (err) next();
+    if (err) next(err);
   });
 });
 
 export default app;
+
 

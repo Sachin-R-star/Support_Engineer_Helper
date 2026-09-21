@@ -28,6 +28,14 @@ export const App: React.FC = () => {
     setActiveTab('triage');
   };
 
+  const [triageSessionKey, setTriageSessionKey] = useState(0);
+
+  const handleNewTriageTab = () => {
+    setInitialTriageQuery(undefined);
+    setTriageSessionKey(prev => prev + 1);
+    setActiveTab('triage');
+  };
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -54,7 +62,7 @@ export const App: React.FC = () => {
           <nav className="nav-tabs">
             <button 
               className={activeTab === 'triage' ? 'active' : ''} 
-              onClick={() => setActiveTab('triage')}
+              onClick={handleNewTriageTab}
             >
               New Triage Session
             </button>
@@ -79,6 +87,7 @@ export const App: React.FC = () => {
           <EngineerDashboard />
         ) : activeTab === 'triage' ? (
           <TriageFlow
+            key={triageSessionKey}
             userId={activeUserId}
             deviceId="dev_mac_01"
             initialQuery={initialTriageQuery}

@@ -31,6 +31,7 @@ export class UniversalSearchEngine implements ISearchProvider {
 
     const { originalTokens, expandedTokens } = TextNormalizer.getExpandedTokens(cleanQuery);
     const normalizedQuery = TextNormalizer.normalize(cleanQuery);
+    const negatedConcepts = TextNormalizer.detectNegatedConcepts(cleanQuery);
 
     const scoredCandidates: { candidate: SearchResultCandidate; score: number }[] = [];
 
@@ -44,34 +45,49 @@ export class UniversalSearchEngine implements ISearchProvider {
       let score = 0;
       const matchReasons: string[] = [];
 
-      // A. Exact Phrase Match in example_user_phrases (+40 points)
+      // Explicit Negation Signal Penalty
+      const isVpnIssue = issue.id === 'kb_net_vpn_01' || issue.keywords.includes('vpn') || issue.issue_type.includes('vpn');
+      const isBsodIssue = issue.id === 'kb_dev_bsod_01' || issue.issue_type === 'hardware_bsod_kernel_panic';
+
+      if (negatedConcepts.has('vpn') && isVpnIssue) {
+        // Explicit user negation: "not using a VPN" -> zero out score for VPN candidates
+        continue;
+      }
+
+      if (negatedConcepts.has('blue screen') && isBsodIssue) {
+        // Explicit user negation: "not a blue screen" -> zero out score for BSOD candidates
+        continue;
+      }
+
+      // A. Exact Phrase Match in example_user_phrases (+55 points)
       for (const phrase of issue.example_user_phrases) {
         const normPhrase = TextNormalizer.normalize(phrase);
-        if (normalizedQuery.includes(normPhrase) || normPhrase.includes(normalizedQuery)) {
-          score += 45;
+        if (normalizedQuery.includes(normPhrase) || (normPhrase.length >= 10 && normalizedQuery.includes(normPhrase.substring(0, 15)))) {
+          score += 55;
           matchReasons.push(`Exact phrase match: "${phrase}"`);
           break;
         }
       }
 
-      // B. Exact Phrase / Term match in display_name or description (+30 points)
+      // B. Exact Phrase / Term match in display_name or description (+35 points)
       const normDisplayName = TextNormalizer.normalize(issue.display_name);
       if (normalizedQuery.includes(normDisplayName) || normDisplayName.includes(normalizedQuery)) {
         score += 35;
         matchReasons.push(`Matched title: "${issue.display_name}"`);
       }
 
-      // C. Keyword & Synonym Tokens matching (+20 points per hit)
+      // C. Keyword & Synonym Tokens matching (+20 points per hit, deduplicated by concept group)
       const issueKeywords = issue.keywords.map(k => TextNormalizer.normalize(k));
       let keywordHits = 0;
       const matchedKwSet = new Set<string>();
+      const matchedConceptGroups = new Set<string>();
 
       for (const kw of issueKeywords) {
         if (matchedKwSet.has(kw)) continue;
         const kwWords = kw.split(' ').filter(w => w.length > 0);
 
         if (kwWords.length > 1) {
-          // Multi-word phrase keyword: ALL component words must be matched by query tokens or fuzzy tokens
+          // Multi-word phrase keyword: ALL component words must be matched
           const allWordsMatch = kwWords.every(w =>
             expandedTokens.some(qToken =>
               qToken === w || (qToken.length >= 4 && (w.includes(qToken) || qToken.includes(w) || FuzzyMatcher.isFuzzyMatch(qToken, w, 0.70)))
@@ -85,10 +101,19 @@ export class UniversalSearchEngine implements ISearchProvider {
         } else {
           // Single-word keyword: check token equality, stem prefix or fuzzy token hit
           for (const qToken of expandedTokens) {
+            const conceptGroup = TextNormalizer.getConceptGroupForTerm(qToken);
+            if (matchedConceptGroups.has(conceptGroup)) {
+              // Deduplicate scoring: single query concept hit counts at most ONCE
+              continue;
+            }
+
             if (kw === qToken || (qToken.length >= 3 && (kw === qToken || qToken.startsWith(kw) || kw.startsWith(qToken)))) {
-              keywordHits++;
+              const domainIndicators = new Set(['mfa', 'printer', 'phishing', 'outlook', 'excel', 'wifi', 'spooler', 'onedrive', 'camera', 'bsod']);
+              const isDomainKey = domainIndicators.has(kw) || domainIndicators.has(qToken);
+              keywordHits += isDomainKey ? 2 : 1;
               matchedKwSet.add(kw);
-              matchReasons.push(`Matched keyword/synonym: "${kw}"`);
+              matchedConceptGroups.add(conceptGroup);
+              matchReasons.push(`Matched keyword: "${kw}"`);
               break;
             }
           }
@@ -102,7 +127,7 @@ export class UniversalSearchEngine implements ISearchProvider {
           if (qToken.length >= 4) { // Only fuzzy match tokens >= 4 chars
             for (const kw of issueKeywords) {
               if (FuzzyMatcher.isFuzzyMatch(qToken, kw, 0.70)) {
-                score += 35;
+                score += 25;
                 matchReasons.push(`Fuzzy typo match: "${qToken}" -> "${kw}"`);
               }
             }
@@ -113,7 +138,7 @@ export class UniversalSearchEngine implements ISearchProvider {
       // E. Subdomain / Category token hit (+15 points)
       const normSubdomain = TextNormalizer.normalize(issue.subdomain);
       const normCategory = TextNormalizer.normalize(issue.category);
-      if (normalizedQuery.includes(normSubdomain) || normalizedQuery.includes(normCategory)) {
+      if (normalizedQuery.includes(normSubdomain) || (normCategory.length > 3 && normalizedQuery.includes(normCategory))) {
         score += 15;
         matchReasons.push(`Category/Subdomain hit: ${issue.category} (${issue.subdomain})`);
       }
@@ -121,12 +146,18 @@ export class UniversalSearchEngine implements ISearchProvider {
       // Normalize final score to confidence percentage (0 to 98)
       if (score > 0) {
         const confidence = Math.min(98, Math.max(30, score));
+
+        // Refine display title to ensure freeze/performance is not labeled as BSOD
+        const displayLabel = (issue.id === 'kb_dev_bsod_01' && !/blue screen|bsod|stop code|kernel panic/i.test(normalizedQuery))
+          ? 'Workstation System Freeze / Performance Hang'
+          : issue.display_name;
+
         scoredCandidates.push({
           candidate: {
             issue_id: issue.id,
             category: issue.category,
             issue_type: issue.issue_type,
-            user_friendly_label: issue.display_name,
+            user_friendly_label: displayLabel,
             short_explanation: issue.description,
             confidence,
             why_it_may_match: matchReasons.slice(0, 2).join('; ') || 'Matched keywords in KB entry'
@@ -182,17 +213,17 @@ export class UniversalSearchEngine implements ISearchProvider {
       },
       {
         category: 'NETWORK',
-        label: 'Network & VPN Connectivity Issue',
-        issueId: 'kb_net_vpn_01',
-        issueType: 'vpn_gateway_timeout',
-        desc: 'Select for remote VPN disconnects, Wi-Fi errors, or network outages.'
+        label: 'Corporate Network & Wi-Fi Connectivity',
+        issueId: 'kb_net_wifi_02',
+        issueType: 'wifi_captive_portal_failure',
+        desc: 'Select for Wi-Fi errors, captive portal prompts, or local network outages.'
       },
       {
         category: 'DEVICE',
         label: 'Hardware & Workstation Fault',
         issueId: 'kb_dev_bsod_01',
         issueType: 'hardware_bsod_kernel_panic',
-        desc: 'Select for blue screen crashes, battery drain, printer jams, or monitor docking issues.'
+        desc: 'Select for system freezes, crashes, battery drain, or printer issues.'
       },
       {
         category: 'APPLICATION',
@@ -221,3 +252,4 @@ export class UniversalSearchEngine implements ISearchProvider {
     }));
   }
 }
+

@@ -122,11 +122,15 @@ INSTRUCTIONS:
       });
 
       if (!response.ok) {
-        throw new Error(`LLM HTTP Error ${response.status}: ${await response.text()}`);
+        console.warn(`[OpenAiCompatibleProvider] LLM HTTP Error ${response.status}. Falling back to deterministic provider.`);
+        return new MockAiProvider().generateStructuredDecision(context);
       }
 
       const data: any = await response.json();
-      return data.choices?.[0]?.message?.content || '{}';
+      return data.choices?.[0]?.message?.content || new MockAiProvider().generateStructuredDecision(context);
+    } catch (err: any) {
+      console.warn(`[OpenAiCompatibleProvider] Fetch error: ${err?.message}. Falling back to deterministic provider.`);
+      return new MockAiProvider().generateStructuredDecision(context);
     } finally {
       clearTimeout(timeoutId);
     }

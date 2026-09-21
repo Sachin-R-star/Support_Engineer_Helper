@@ -202,7 +202,7 @@ describe('Phase 18 — Adaptive Troubleshooting / Information-Gain Engine', () =
 
     expect(step).not.toBeNull();
     expect(step?.score).toBeLessThanOrEqual(100);
-    expect(step?.actionText).not.toMatch(/rm -rf/i);
+    expect(step?.actionText || step?.title || '').not.toMatch(/rm -rf/i);
   });
 
   test('15. Resolution cannot be declared by adaptive engine without explicit verification', () => {
