@@ -38,7 +38,13 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
       const newSession = await ApiClient.startTriage(userId, query, deviceId);
       setSession(newSession);
     } catch (err: any) {
-      setError(err.message || 'Error starting triage session');
+      try {
+        ApiClient.setEdgeMode(true);
+        const fallbackSession = await ApiClient.startTriage(userId, query, deviceId);
+        setSession(fallbackSession);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error starting triage session');
+      }
     } finally {
       setLoading(false);
     }
@@ -52,7 +58,14 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
       const newSession = await ApiClient.startTriage(userId, query, deviceId);
       setSession(newSession);
     } catch (err: any) {
-      setError(err.message || 'Error starting category triage');
+      try {
+        ApiClient.setEdgeMode(true);
+        const query = `Issue related to ${category}`;
+        const fallbackSession = await ApiClient.startTriage(userId, query, deviceId);
+        setSession(fallbackSession);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error starting category triage');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,7 +79,13 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
       const updated = await ApiClient.selectCandidate(session.sessionId, issueTypeId);
       setSession(updated);
     } catch (err: any) {
-      setError(err.message || 'Error selecting candidate issue');
+      try {
+        ApiClient.setEdgeMode(true);
+        const updated = await ApiClient.selectCandidate(session.sessionId, issueTypeId);
+        setSession(updated);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error selecting candidate issue');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +99,13 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
       const updated = await ApiClient.answerQuestion(session.sessionId, questionId, answerValue, isUnsure);
       setSession(updated);
     } catch (err: any) {
-      setError(err.message || 'Error recording triage answer');
+      try {
+        ApiClient.setEdgeMode(true);
+        const updated = await ApiClient.answerQuestion(session.sessionId, questionId, answerValue, isUnsure);
+        setSession(updated);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error recording triage answer');
+      }
     } finally {
       setLoading(false);
     }
@@ -94,7 +119,13 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
       const updated = await ApiClient.goBack(session.sessionId);
       setSession(updated);
     } catch (err: any) {
-      setError(err.message || 'Error navigating back');
+      try {
+        ApiClient.setEdgeMode(true);
+        const updated = await ApiClient.goBack(session.sessionId);
+        setSession(updated);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error navigating back');
+      }
     } finally {
       setLoading(false);
     }
@@ -112,8 +143,20 @@ export const TriageFlow: React.FC<TriageFlowProps> = ({
   return (
     <div className="triage-flow-container">
       {error && (
-        <div className="error-banner">
-          ⚠️ <strong>System Notice:</strong> {error}
+        <div className="error-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div>
+            ⚠️ <strong>System Notice:</strong> {error}
+          </div>
+          <button
+            className="secondary-btn"
+            style={{ padding: '6px 14px', fontSize: '13px', whiteSpace: 'nowrap' }}
+            onClick={() => {
+              ApiClient.setEdgeMode(true);
+              setError(null);
+            }}
+          >
+            ⚡ Switch to Edge Engine
+          </button>
         </div>
       )}
 

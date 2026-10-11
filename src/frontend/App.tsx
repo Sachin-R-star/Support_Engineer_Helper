@@ -3,13 +3,20 @@ import { TriageFlow } from './components/TriageFlow';
 import { IncidentHistory } from './components/IncidentHistory';
 import { EngineerDashboard } from './components/EngineerDashboard';
 import { CommandPalette } from './components/CommandPalette';
+import { ApiClient } from './services/apiClient';
 import './index.css';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'triage' | 'dashboard' | 'history'>('triage');
   const [initialTriageQuery, setInitialTriageQuery] = useState<string | undefined>(undefined);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isEdgeMode, setIsEdgeMode] = useState(false);
   const activeUserId = 'usr_exec_01'; // Default test user: Alex Morgan (Executive VIP)
+
+  useEffect(() => {
+    setIsEdgeMode(ApiClient.isEdgeMode);
+    return ApiClient.onModeChange(setIsEdgeMode);
+  }, []);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -50,6 +57,30 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {isEdgeMode && (
+            <div
+              className="edge-mode-badge"
+              title="Resilient in-browser diagnostic engine active (Zero Cloud Latency & 100% Rate-Limit Protected). Click to reconnect to cloud."
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#34d399',
+                backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                borderRadius: '16px',
+                cursor: 'pointer'
+              }}
+              onClick={() => ApiClient.setEdgeMode(false)}
+            >
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+              <span>⚡ Resilient Edge Engine</span>
+            </div>
+          )}
+
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
             className="header-cmd-badge"
